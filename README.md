@@ -1,5 +1,8 @@
 # Kite
 
+[![CI](https://github.com/taksha17/kite/actions/workflows/ci.yml/badge.svg)](https://github.com/taksha17/kite/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
 **Books that stay light.**
 
 Kite is an MIT-licensed, open-source accounting app for Indian small and mid-size
@@ -52,8 +55,8 @@ Always use the volume-aware scripts on machines with a full root disk — they p
 Cargo/npm/temp caches under `.cache/` on this drive:
 
 ```bash
-git clone <this-repo>
-cd <repo>
+git clone https://github.com/taksha17/kite.git
+cd kite
 npm install
 npm run kite:dev      # preferred (uses scripts/env.sh)
 # or: source scripts/env.sh && npm run tauri dev

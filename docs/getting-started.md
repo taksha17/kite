@@ -3,8 +3,8 @@
 ## Clone and run
 
 ```bash
-git clone <repo-url>
-cd <repo>
+git clone https://github.com/taksha17/kite.git
+cd kite
 npm install
 npm run kite:dev      # or: npm run tauri dev
 ```

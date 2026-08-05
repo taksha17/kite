@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/taksha17/kite/actions/workflows/ci.yml/badge.svg)](https://github.com/taksha17/kite/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Forks](https://img.shields.io/github/forks/taksha17/kite?style=social)](https://github.com/taksha17/kite/fork)
 
 **Books that stay light.**
 
@@ -24,6 +25,22 @@ proprietary accounting suite.
 
 A scripted end-to-end demo (company → voucher → invoice → reports → backup)
 can be regenerated any time with `npm run kite:demo`.
+
+## Download
+
+Grab the latest build from
+[**Releases**](https://github.com/taksha17/kite/releases/latest):
+
+| Platform | Installer |
+| --- | --- |
+| Windows 10/11 (64-bit) | `kite-windows-x64-setup.exe` |
+| macOS (Apple Silicon) | `kite-macos-arm64.dmg` |
+| macOS (Intel) | `kite-macos-x64.dmg` |
+| Linux (Ubuntu/Debian) | `kite-linux-x64.deb` |
+| Android / iOS | PWA via your Kite Team server — [docs/deployment.md](./docs/deployment.md) |
+
+Builds are unsigned for now: on Windows click **More info → Run anyway**, on
+macOS **right-click → Open** the first time.
 
 ## Features (v0.1+)
 
@@ -133,6 +150,10 @@ docs/                  Getting started, deployment
 4. **Next** — bank-statement import, ask-my-books Q&A, bill capture
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+Like Kite? **Star the repo.** Building your own thing on top?
+[**Fork it**](https://github.com/taksha17/kite/fork) — that's what the MIT
+license is for.
 
 ## License
 

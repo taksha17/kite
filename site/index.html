@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kite — Books that stay light</title>
+<meta name="description" content="Free, open-source accounting for Indian small businesses. GST invoices, e-way bills, inventory and reports — offline-first, your data stays with you." />
+<link rel="icon" type="image/svg+xml" href="assets/kite.svg" />
+<style>
+  :root {
+    --teal: #0f7a8a;
+    --teal-deep: #0a5561;
+    --teal-night: #083038;
+    --orange: #f0a35e;
+    --ink: #0e1b1e;
+    --muted: #4d676d;
+    --paper: #f7fbfc;
+    --card: #ffffff;
+    --line: #dcebee;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.6;
+  }
+  a { color: var(--teal); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  img { max-width: 100%; display: block; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+  /* ---------- header ---------- */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(8, 48, 56, 0.92);
+    backdrop-filter: blur(8px);
+  }
+  .nav { display: flex; align-items: center; gap: 18px; height: 60px; }
+  .brand { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 700; font-size: 19px; letter-spacing: 0.2px; }
+  .brand img { width: 30px; height: 30px; border-radius: 8px; }
+  .brand:hover { text-decoration: none; }
+  .nav .spacer { flex: 1; }
+  .nav a.link { color: #cfe7ea; font-size: 14.5px; font-weight: 500; }
+  .nav a.link:hover { color: #fff; text-decoration: none; }
+  .nav .gh-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--orange); color: #2a1a05;
+    font-weight: 700; font-size: 14px;
+    padding: 7px 14px; border-radius: 999px;
+  }
+  .nav .gh-btn:hover { background: #f6b878; text-decoration: none; }
+
+  /* ---------- hero ---------- */
+  .hero {
+    background: linear-gradient(160deg, var(--teal-night) 0%, var(--teal-deep) 55%, var(--teal) 100%);
+    color: #eaf6f7;
+    padding: 84px 0 96px;
+    text-align: center;
+  }
+  .hero .logo { width: 84px; height: 84px; margin: 0 auto 22px; border-radius: 20px; box-shadow: 0 12px 32px rgba(0,0,0,.35); }
+  .pill {
+    display: inline-block; font-size: 13px; font-weight: 600;
+    color: #bfe6ea; border: 1px solid rgba(191,230,234,.4);
+    padding: 4px 12px; border-radius: 999px; margin-bottom: 18px;
+  }
+  .hero h1 { font-size: clamp(34px, 5.6vw, 56px); line-height: 1.1; color: #fff; letter-spacing: -0.5px; }
+  .hero p.sub { max-width: 620px; margin: 18px auto 30px; font-size: clamp(15.5px, 2vw, 18.5px); color: #cde9ec; }
+  .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-weight: 700; font-size: 16px; padding: 13px 26px; border-radius: 12px;
+    border: 1.5px solid transparent; cursor: pointer;
+  }
+  .btn:hover { text-decoration: none; }
+  .btn-primary { background: var(--orange); color: #2a1a05; box-shadow: 0 8px 22px rgba(240,163,94,.35); }
+  .btn-primary:hover { background: #f6b878; }
+  .btn-ghost { color: #eaf6f7; border-color: rgba(234,246,247,.45); }
+  .btn-ghost:hover { background: rgba(255,255,255,.08); }
+  .shields { margin-top: 26px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .shields img { height: 22px; display: inline-block; }
+
+  /* ---------- sections ---------- */
+  section { padding: 72px 0; }
+  h2 { font-size: clamp(26px, 3.6vw, 36px); letter-spacing: -0.4px; text-align: center; }
+  .lead { text-align: center; color: var(--muted); max-width: 640px; margin: 12px auto 0; }
+  .version-line { text-align:center; margin-top: 10px; font-size: 14px; color: var(--muted); }
+  .version-line b { color: var(--teal-deep); }
+
+  /* ---------- download cards ---------- */
+  .grid { display: grid; gap: 18px; margin-top: 40px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 22px; display: flex; flex-direction: column; gap: 6px;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(10,85,97,.12); }
+  .card.detected { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(240,163,94,.35); }
+  .card .os { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
+  .card .os svg { width: 26px; height: 26px; fill: var(--teal-deep); }
+  .card .meta { font-size: 13.5px; color: var(--muted); min-height: 20px; }
+  .card .dl {
+    margin-top: 12px; text-align: center;
+    background: var(--teal); color: #fff; font-weight: 700; font-size: 15px;
+    padding: 11px 14px; border-radius: 10px;
+  }
+  .card .dl:hover { background: var(--teal-deep); text-decoration: none; }
+  .card .alt { font-size: 12.5px; color: var(--muted); text-align: center; margin-top: 8px; }
+  .card.pwa { background: linear-gradient(150deg, #ffffff, #fef4ea); }
+  .fineprint { margin-top: 26px; font-size: 13.5px; color: var(--muted); background: #fff; border: 1px dashed var(--line); border-radius: 12px; padding: 14px 18px; }
+  .fineprint b { color: var(--ink); }
+
+  /* ---------- screenshots ---------- */
+  .shots { display: grid; gap: 18px; margin-top: 40px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .shots figure { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(10,85,97,.10); background: #fff; }
+  .shots figcaption { font-size: 13.5px; color: var(--muted); padding: 10px 14px; }
+
+  /* ---------- features ---------- */
+  .feat { display: grid; gap: 16px; margin-top: 40px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .feat .f { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+  .feat .f h3 { font-size: 16px; margin-bottom: 6px; color: var(--teal-deep); }
+  .feat .f p { font-size: 14px; color: var(--muted); }
+
+  /* ---------- fork banner ---------- */
+  .fork-banner {
+    background: linear-gradient(150deg, var(--teal-night), var(--teal-deep));
+    color: #eaf6f7; border-radius: 24px; padding: 48px 32px; text-align: center;
+  }
+  .fork-banner h2 { color: #fff; }
+  .fork-banner p { max-width: 560px; margin: 12px auto 26px; color: #cde9ec; }
+  .fork-banner .btn-primary { font-size: 17px; }
+  .fork-banner .star-link { display: inline-block; margin-top: 14px; color: #bfe6ea; font-size: 14px; }
+
+  footer { padding: 36px 0 48px; text-align: center; color: var(--muted); font-size: 13.5px; }
+  footer .links { display: flex; gap: 18px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top"><img src="assets/kite.svg" alt="Kite logo" /> Kite</a>
+    <span class="spacer"></span>
+    <a class="link" href="#download">Download</a>
+    <a class="link" href="#features">Features</a>
+    <a class="link" href="https://github.com/taksha17/kite/tree/main/docs">Docs</a>
+    <a class="gh-btn" href="https://github.com/taksha17/kite/fork" rel="noopener">
+      <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor"><path d="M5 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm0 2.122a2.25 2.25 0 1 0-1.5 0v.878A2.25 2.25 0 0 0 5.75 8.5h1.5v2.128a2.251 2.251 0 1 0 1.5 0V8.5h1.5a2.25 2.25 0 0 0 2.25-2.25v-.878a2.25 2.25 0 1 0-1.5 0v.878a.75.75 0 0 1-.75.75h-4.5A.75.75 0 0 1 5 6.25v-.878zM8.75 12.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zM12 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0z"/></svg>
+      Fork
+    </a>
+  </div>
+</header>
+
+<section class="hero" id="top">
+  <div class="wrap">
+    <img class="logo" src="assets/kite.svg" alt="Kite" />
+    <span class="pill" id="version-pill">v0.1.0 · MIT open source</span>
+    <h1>Books that stay light.</h1>
+    <p class="sub">
+      Free, open-source accounting for Indian small businesses — GST invoices,
+      e-way bills, inventory and reports. Offline-first: your data stays on
+      your machine, in files you own.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#download">
+        <svg viewBox="0 0 16 16" width="17" height="17" fill="currentColor"><path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"/><path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z"/></svg>
+        Download
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/taksha17/kite/fork" rel="noopener">
+        <svg viewBox="0 0 16 16" width="17" height="17" fill="currentColor"><path d="M5 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm0 2.122a2.25 2.25 0 1 0-1.5 0v.878A2.25 2.25 0 0 0 5.75 8.5h1.5v2.128a2.251 2.251 0 1 0 1.5 0V8.5h1.5a2.25 2.25 0 0 0 2.25-2.25v-.878a2.25 2.25 0 1 0-1.5 0v.878a.75.75 0 0 1-.75.75h-4.5A.75.75 0 0 1 5 6.25v-.878zM8.75 12.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zM12 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0z"/></svg>
+        Fork on GitHub
+      </a>
+    </div>
+    <div class="shields">
+      <a href="https://github.com/taksha17/kite"><img src="https://img.shields.io/github/stars/taksha17/kite?style=social" alt="GitHub stars" /></a>
+      <a href="https://github.com/taksha17/kite/fork"><img src="https://img.shields.io/github/forks/taksha17/kite?style=social" alt="GitHub forks" /></a>
+      <a href="https://github.com/taksha17/kite/actions/workflows/ci.yml"><img src="https://github.com/taksha17/kite/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
+    </div>
+  </div>
+</section>
+
+<section id="download">
+  <div class="wrap">
+    <h2>Download Kite</h2>
+    <p class="lead">Pick your platform — every build is free, with no accounts and no lock-in.</p>
+    <p class="version-line">Latest release: <b id="latest-version">v0.1.0</b> · <a href="https://github.com/taksha17/kite/releases/latest" id="release-notes-link">release notes</a></p>
+
+    <div class="grid">
+      <div class="card" data-platform="windows">
+        <div class="os">
+          <svg viewBox="0 0 24 24"><path d="M3 5.5 10.5 4.4v7.1H3V5.5zm9 0L21 3v8.5h-9V5.5zM3 12.5h7.5v7.1L3 18.5v-6zm9 0h9V21l-9-1.4v-7.1z"/></svg>
+          Windows
+        </div>
+        <div class="meta">Windows 10 / 11 · 64-bit</div>
+        <div class="meta" data-meta="kite-windows-x64-setup.exe"></div>
+        <a class="dl" href="https://github.com/taksha17/kite/releases/latest/download/kite-windows-x64-setup.exe">Download .exe</a>
+        <div class="alt">NSIS installer</div>
+      </div>
+
+      <div class="card" data-platform="mac-arm">
+        <div class="os">
+          <svg viewBox="0 0 24 24"><path d="M17.05 12.54c-.03-2.89 2.36-4.27 2.47-4.34-1.35-1.97-3.44-2.24-4.18-2.27-1.78-.18-3.47 1.05-4.37 1.05-.9 0-2.29-1.02-3.77-1-1.94.03-3.73 1.13-4.73 2.86-2.02 3.5-.52 8.68 1.45 11.52.96 1.39 2.1 2.95 3.6 2.89 1.45-.06 2-.93 3.75-.93s2.25.93 3.78.9c1.56-.03 2.55-1.41 3.5-2.81 1.1-1.61 1.55-3.17 1.58-3.25-.04-.02-3.03-1.16-3.08-4.62zM14.16 4.06c.8-.97 1.34-2.32 1.19-3.66-1.15.05-2.55.77-3.38 1.74-.74.86-1.39 2.23-1.22 3.55 1.29.1 2.6-.65 3.41-1.63z"/></svg>
+          macOS · Apple&nbsp;Silicon
+        </div>
+        <div class="meta">M1 / M2 / M3 / M4</div>
+        <div class="meta" data-meta="kite-macos-arm64.dmg"></div>
+        <a class="dl" href="https://github.com/taksha17/kite/releases/latest/download/kite-macos-arm64.dmg">Download .dmg</a>
+        <div class="alt"></div>
+      </div>
+
+      <div class="card" data-platform="mac-intel">
+        <div class="os">
+          <svg viewBox="0 0 24 24"><path d="M17.05 12.54c-.03-2.89 2.36-4.27 2.47-4.34-1.35-1.97-3.44-2.24-4.18-2.27-1.78-.18-3.47 1.05-4.37 1.05-.9 0-2.29-1.02-3.77-1-1.94.03-3.73 1.13-4.73 2.86-2.02 3.5-.52 8.68 1.45 11.52.96 1.39 2.1 2.95 3.6 2.89 1.45-.06 2-.93 3.75-.93s2.25.93 3.78.9c1.56-.03 2.55-1.41 3.5-2.81 1.1-1.61 1.55-3.17 1.58-3.25-.04-.02-3.03-1.16-3.08-4.62zM14.16 4.06c.8-.97 1.34-2.32 1.19-3.66-1.15.05-2.55.77-3.38 1.74-.74.86-1.39 2.23-1.22 3.55 1.29.1 2.6-.65 3.41-1.63z"/></svg>
+          macOS · Intel
+        </div>
+        <div class="meta">Older Intel Macs</div>
+        <div class="meta" data-meta="kite-macos-x64.dmg"></div>
+        <a class="dl" href="https://github.com/taksha17/kite/releases/latest/download/kite-macos-x64.dmg">Download .dmg</a>
+        <div class="alt"></div>
+      </div>
+
+      <div class="card" data-platform="linux">
+        <div class="os">
+          <svg viewBox="0 0 24 24"><path d="M12 2c-.8 0-1.5.7-1.9 1.6-.4.8-.6 1.7-.9 2.5-.4.9-.9 1.7-1.4 2.5-.5.7-1.1 1.4-1.6 2.2-.5.8-.9 1.6-1.1 2.5-.2.8-.3 1.7-.1 2.5.2.8.6 1.5 1.2 2 .6.5 1.4.8 2.2.9.8.1 1.6 0 2.4 0h2.4c.8-.1 1.6-.4 2.2-.9.6-.5 1-1.2 1.2-2 .2-.8.1-1.7-.1-2.5-.2-.9-.6-1.7-1.1-2.5-.5-.8-1.1-1.5-1.6-2.2-.5-.8-1-1.6-1.4-2.5-.3-.8-.5-1.7-.9-2.5C13.5 2.7 12.8 2 12 2zM7 21c-1 0-2-.3-2.7-.9-.8.5-1.6 1-2 1.7-.2.4 0 .8.4.9 1 .3 2.1.3 3.1.2 1-.1 2-.4 2.9-.7H7zm10 0h-1.6c.9.3 1.9.6 2.9.7 1 .1 2.1.1 3.1-.2.4-.1.6-.5.4-.9-.4-.7-1.2-1.2-2-1.7-.7.6-1.7.9-2.8.9z"/></svg>
+          Linux
+        </div>
+        <div class="meta">Ubuntu / Debian · 64-bit</div>
+        <div class="meta" data-meta="kite-linux-x64.deb"></div>
+        <a class="dl" href="https://github.com/taksha17/kite/releases/latest/download/kite-linux-x64.deb">Download .deb</a>
+        <div class="alt"><a href="https://github.com/taksha17/kite#quick-start">Other distros: build from source</a></div>
+      </div>
+
+      <div class="card pwa" data-platform="android">
+        <div class="os">
+          <svg viewBox="0 0 24 24"><path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84 1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48A5.84 5.84 0 0 0 12 1c-.96 0-1.86.23-2.66.63L7.85.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31A5.983 5.983 0 0 0 6 7h12c0-1.99-.97-3.75-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/></svg>
+          Android &amp; iOS
+        </div>
+        <div class="meta">Progressive Web App via Kite Team</div>
+        <div class="meta"></div>
+        <a class="dl" href="https://github.com/taksha17/kite/blob/main/docs/deployment.md">Set up mobile access</a>
+        <div class="alt">Runs from your team's server — install to home screen</div>
+      </div>
+    </div>
+
+    <div class="fineprint">
+      <b>First-run notes:</b> builds are unsigned (code-signing certificates cost money — maybe later).
+      On <b>Windows</b>, click <i>More info → Run anyway</i> if SmartScreen asks.
+      On <b>macOS</b>, right-click the app → <i>Open</i> the first time.
+      Kite never phones home; AI quick entry is optional and off by default.
+    </div>
+  </div>
+</section>
+
+<section id="screenshots" style="padding-top:0">
+  <div class="wrap">
+    <div class="shots">
+      <figure>
+        <img src="assets/screenshot-voucher.png" alt="Voucher entry screen" loading="lazy" />
+        <figcaption>Voucher entry with GST split and AI quick entry</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/screenshot-invoice.png" alt="GST tax invoice preview" loading="lazy" />
+        <figcaption>Print-ready GST tax invoice with e-way bill number</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/screenshot-reports.png" alt="Reports and GSTR-1" loading="lazy" />
+        <figcaption>Reports: trial balance, P&amp;L, GSTR-1 with Excel export</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="features" style="padding-top:0">
+  <div class="wrap">
+    <h2>Everything a small business needs</h2>
+    <p class="lead">No subscriptions, no cloud requirement, no feature gates.</p>
+    <div class="feat">
+      <div class="f"><h3>GST, done right</h3><p>CGST/SGST/IGST split, HSN/SAC, GSTR-1 &amp; GSTR-3B style summaries with one-click Excel export.</p></div>
+      <div class="f"><h3>e-Way bills</h3><p>Generate NIC e-way bills straight from the invoice — sandbox and production endpoints.</p></div>
+      <div class="f"><h3>Inventory</h3><p>Units, godowns, stock items, sales/purchase stock lines and stock summaries.</p></div>
+      <div class="f"><h3>Multi-user teams</h3><p>Optional Kite Team server: roles, audit log, per-company data, access from any browser or phone.</p></div>
+      <div class="f"><h3>AI quick entry</h3><p>Describe a voucher in one sentence — AI drafts it for review. Bring your own key; drafts never auto-post.</p></div>
+      <div class="f"><h3>Offline &amp; private</h3><p>One SQLite file per company on your disk. Copy it anywhere to back up. You own your books.</p></div>
+      <div class="f"><h3>PDF invoices</h3><p>Tax-invoice preview, download and email via your own SMTP.</p></div>
+      <div class="f"><h3>Double-entry core</h3><p>Balanced books enforced before every save; day book, trial balance, P&amp;L, balance sheet.</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="fork-banner">
+      <h2>Make it yours.</h2>
+      <p>
+        Kite is MIT-licensed and built to be forked. Take the codebase, rename it,
+        bend it to your workflow — or help us make the original better.
+      </p>
+      <a class="btn btn-primary" href="https://github.com/taksha17/kite/fork" rel="noopener">
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M5 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm0 2.122a2.25 2.25 0 1 0-1.5 0v.878A2.25 2.25 0 0 0 5.75 8.5h1.5v2.128a2.251 2.251 0 1 0 1.5 0V8.5h1.5a2.25 2.25 0 0 0 2.25-2.25v-.878a2.25 2.25 0 1 0-1.5 0v.878a.75.75 0 0 1-.75.75h-4.5A.75.75 0 0 1 5 6.25v-.878zM8.75 12.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zM12 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0z"/></svg>
+        Fork the repo
+      </a>
+      <br />
+      <a class="star-link" href="https://github.com/taksha17/kite">…or just star it on GitHub — that helps too</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="links">
+      <a href="https://github.com/taksha17/kite">GitHub</a>
+      <a href="https://github.com/taksha17/kite/releases/latest">All releases</a>
+      <a href="https://github.com/taksha17/kite/blob/main/docs/getting-started.md">Getting started</a>
+      <a href="https://github.com/taksha17/kite/blob/main/LICENSE">MIT License</a>
+      <a href="https://github.com/taksha17/kite/blob/main/CONTRIBUTING.md">Contribute</a>
+    </div>
+    <p>Kite is an original open-source project — not affiliated with Tally or any proprietary accounting suite.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var repo = "taksha17/kite";
+
+  // Highlight the card matching the visitor's platform.
+  var ua = navigator.userAgent;
+  var key = /Windows/i.test(ua) ? "windows"
+    : /Android|iPhone|iPad/i.test(ua) ? "android"
+    : /Mac/i.test(ua) ? "mac-arm"
+    : /Linux/i.test(ua) ? "linux" : null;
+  if (key) {
+    var el = document.querySelector('[data-platform="' + key + '"]');
+    if (el) el.classList.add("detected");
+    if (key === "mac-arm") {
+      var intel = document.querySelector('[data-platform="mac-intel"]');
+      if (intel) intel.classList.add("detected");
+    }
+  }
+
+  function fmtSize(bytes) {
+    if (!bytes) return "";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  // Fill in live version + file sizes from the latest GitHub release.
+  fetch("https://api.github.com/repos/" + repo + "/releases/latest")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (rel) {
+      if (!rel) return;
+      if (rel.tag_name) {
+        document.getElementById("latest-version").textContent = rel.tag_name;
+        document.getElementById("version-pill").textContent = rel.tag_name + " · MIT open source";
+      }
+      (rel.assets || []).forEach(function (a) {
+        var slot = document.querySelector('[data-meta="' + a.name + '"]');
+        if (slot) slot.textContent = fmtSize(a.size) + " · " + a.download_count + " downloads";
+      });
+    })
+    .catch(function () { /* offline or rate-limited: permalinks still work */ });
+})();
+</script>
+
+</body>
+</html>

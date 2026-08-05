@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            os: windows-latest
+            bundles: nsis
+            src: src-tauri/target/release/bundle/nsis/*-setup.exe
+            asset: kite-windows-x64-setup.exe
+          - name: macos-x64
+            os: macos-13
+            bundles: dmg
+            src: src-tauri/target/release/bundle/dmg/*.dmg
+            asset: kite-macos-x64.dmg
+          - name: macos-arm64
+            os: macos-latest
+            bundles: dmg
+            src: src-tauri/target/release/bundle/dmg/*.dmg
+            asset: kite-macos-arm64.dmg
+          - name: linux-x64
+            os: ubuntu-latest
+            bundles: deb
+            src: src-tauri/target/release/bundle/deb/*.deb
+            asset: kite-linux-x64.deb
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - run: npm ci
+
+      - name: Build bundles
+        run: npx tauri build --bundles ${{ matrix.bundles }}
+
+      - name: Stage asset (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: mkdir -p release && cp ${{ matrix.src }} release/${{ matrix.asset }}
+
+      - name: Stage asset (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release | Out-Null
+          Copy-Item "${{ matrix.src }}" "release/${{ matrix.asset }}"
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Kite ${{ github.ref_name }}
+          generate_release_notes: true
+          files: release/${{ matrix.asset }}

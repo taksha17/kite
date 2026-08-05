@@ -14,6 +14,9 @@ businesses — and anyone else who wants simple, local, double-entry books.
 - **India-first** — INR, Apr–Mar financial year defaults, GST-ready seeds
 - **Forkable** — clone from Git, invent your own product on top
 
+**Download + demo video:
+[kite-v2-ten.vercel.app](https://kite-v2-ten.vercel.app/)**
+
 This is an **original** product. It is not affiliated with Tally or any
 proprietary accounting suite.
 

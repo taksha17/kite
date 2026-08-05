@@ -1,0 +1,46 @@
+{
+  "name": "kite",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Free, open-source accounting for Indian small businesses — GST invoices, e-way bills, inventory and reports. Offline-first desktop app with an optional multi-user team server.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "kite:dev": "bash scripts/dev.sh",
+    "kite:build": "bash scripts/build.sh",
+    "kite:server": "bash scripts/server.sh",
+    "kite:server:test": "cd kite-server && cargo test",
+    "kite:icons": "node scripts/make-icons.mjs",
+    "kite:demo": "node scripts/demo-walkthrough.mjs"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2.7.2",
+    "@tauri-apps/plugin-fs": "^2.5.1",
+    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-sql": "^2.4.0",
+    "jspdf": "^4.2.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.18.2",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@types/xlsx": "^0.0.35",
+    "@vitejs/plugin-react": "^4.6.0",
+    "playwright-core": "^1.62.1",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.4",
+    "vitest": "^4.1.10"
+  }
+}

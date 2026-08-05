@@ -112,6 +112,14 @@
   .fineprint { margin-top: 26px; font-size: 13.5px; color: var(--muted); background: #fff; border: 1px dashed var(--line); border-radius: 12px; padding: 14px 18px; }
   .fineprint b { color: var(--ink); }
 
+  /* ---------- demo video ---------- */
+  .video-frame {
+    margin-top: 36px; border-radius: var(--radius); overflow: hidden;
+    border: 1px solid var(--line); box-shadow: 0 18px 44px rgba(10,85,97,.18);
+    background: #000;
+  }
+  .video-frame video { width: 100%; display: block; aspect-ratio: 16 / 9; }
+
   /* ---------- screenshots ---------- */
   .shots { display: grid; gap: 18px; margin-top: 40px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
   .shots figure { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(10,85,97,.10); background: #fff; }
@@ -143,6 +151,7 @@
   <div class="wrap nav">
     <a class="brand" href="#top"><img src="assets/kite.svg" alt="Kite logo" /> Kite</a>
     <span class="spacer"></span>
+    <a class="link" href="#demo">Demo</a>
     <a class="link" href="#download">Download</a>
     <a class="link" href="#features">Features</a>
     <a class="link" href="https://github.com/taksha17/kite/tree/main/docs">Docs</a>
@@ -181,7 +190,24 @@
   </div>
 </section>
 
-<section id="download">
+<section id="demo">
+  <div class="wrap">
+    <h2>See it in action</h2>
+    <p class="lead">A two-minute tour: create a company, post a sale, print the GST invoice, export GSTR-1.</p>
+    <div class="video-frame">
+      <video
+        controls
+        preload="none"
+        poster="assets/demo-poster.png"
+        src="https://github.com/taksha17/kite/releases/latest/download/kite-walkthrough.webm">
+        Sorry, your browser can't play this video —
+        <a href="https://github.com/taksha17/kite/releases/latest/download/kite-walkthrough.webm">download the walkthrough</a>.
+      </video>
+    </div>
+  </div>
+</section>
+
+<section id="download" style="padding-top:0">
   <div class="wrap">
     <h2>Download Kite</h2>
     <p class="lead">Pick your platform — every build is free, with no accounts and no lock-in.</p>

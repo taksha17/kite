@@ -33,14 +33,18 @@ Grab the latest build from
 
 | Platform | Installer |
 | --- | --- |
-| Windows 10/11 (64-bit) | `kite-windows-x64-setup.exe` |
-| macOS (Apple Silicon) | `kite-macos-arm64.dmg` |
-| macOS (Intel) | `kite-macos-x64.dmg` |
-| Linux (Ubuntu/Debian) | `kite-linux-x64.deb` |
+| Windows 10/11 (64-bit) | [kite-windows-x64-setup.exe](https://github.com/taksha17/kite/releases/latest/download/kite-windows-x64-setup.exe) |
+| macOS (Apple Silicon) | [kite-macos-arm64.dmg](https://github.com/taksha17/kite/releases/latest/download/kite-macos-arm64.dmg) |
+| macOS (Intel) | [kite-macos-x64.dmg](https://github.com/taksha17/kite/releases/latest/download/kite-macos-x64.dmg) |
+| Linux (Ubuntu/Debian) | [kite-linux-x64.deb](https://github.com/taksha17/kite/releases/latest/download/kite-linux-x64.deb) |
 | Android / iOS | PWA via your Kite Team server — [docs/deployment.md](./docs/deployment.md) |
 
 Builds are unsigned for now: on Windows click **More info → Run anyway**, on
 macOS **right-click → Open** the first time.
+
+**New here?** Watch the
+[2-minute walkthrough video](https://github.com/taksha17/kite/releases/latest/download/kite-walkthrough.webm) —
+company setup to GST invoice to Excel export.
 
 ## Features (v0.1+)
 

@@ -4,6 +4,10 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to upload assets to (e.g. v0.1.0)
+        required: true
 
 permissions:
   contents: write
@@ -22,7 +26,7 @@ jobs:
             src: src-tauri/target/release/bundle/nsis/*-setup.exe
             asset: kite-windows-x64-setup.exe
           - name: macos-x64
-            os: macos-13
+            os: macos-15-intel
             bundles: dmg
             src: src-tauri/target/release/bundle/dmg/*.dmg
             asset: kite-macos-x64.dmg
@@ -71,7 +75,8 @@ jobs:
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Kite ${{ github.ref_name }}
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: Kite ${{ github.event.inputs.tag || github.ref_name }}
           generate_release_notes: true
+          overwrite_files: true
           files: release/${{ matrix.asset }}

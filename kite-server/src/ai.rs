@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 use crate::error::ApiError;
 
 const MAX_PROMPT_CHARS: usize = 16_000;
-const TIMEOUT_SECS: u64 = 60;
+const TIMEOUT_SECS: u64 = 45;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]

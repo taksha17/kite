@@ -9,6 +9,8 @@ export interface HttpRequestInput {
   basicUser?: string;
   /** Basic auth password (WooCommerce secret) */
   basicPass?: string;
+  /** Per-request timeout in seconds (Rust clamps 5–90). Default 30. */
+  timeoutSecs?: number;
 }
 
 export interface HttpResponse {
@@ -17,7 +19,7 @@ export interface HttpResponse {
   headers: Record<string, string>;
 }
 
-/** CORS-free HTTP via Rust (reqwest). */
+/** CORS-free HTTP via Rust (async reqwest — does not freeze the window). */
 export async function httpRequest(
   input: HttpRequestInput,
 ): Promise<HttpResponse> {
@@ -29,6 +31,7 @@ export async function httpRequest(
       body: input.body ?? null,
       basicUser: input.basicUser ?? null,
       basicPass: input.basicPass ?? null,
+      timeoutSecs: input.timeoutSecs ?? null,
     },
   });
 }

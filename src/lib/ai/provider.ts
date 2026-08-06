@@ -74,22 +74,21 @@ export async function soloProviderChat(
     throw new Error("Unknown AI provider.");
   }
 
-  // Free tiers (esp. OpenRouter) throttle often — one automatic retry
-  // smooths a transient 429 without any user action.
-  let res = await httpRequest({
-    method: "POST",
-    url,
-    headers: { "Content-Type": "application/json", ...headers },
-    body: JSON.stringify(payload),
-  });
-  if (res.status === 429) {
-    await new Promise((r) => setTimeout(r, 4000));
-    res = await httpRequest({
+  // Free tiers (esp. OpenRouter) throttle often — one short retry on 429.
+  // Keep each attempt under 40s so the window never sits blocked for minutes.
+  const requestOnce = () =>
+    httpRequest({
       method: "POST",
       url,
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(payload),
+      timeoutSecs: 40,
     });
+
+  let res = await requestOnce();
+  if (res.status === 429) {
+    await new Promise((r) => setTimeout(r, 2000));
+    res = await requestOnce();
   }
 
   let body: unknown = null;

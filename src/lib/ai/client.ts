@@ -6,6 +6,31 @@ import { buildDraftPrompt } from "./prompt";
 import { parseVoucherDraft, type ParsedDraft } from "./parse";
 import type { AiSettings, DraftContext } from "./types";
 
+/** Overall budget for one AI chat (covers network + one short 429 retry). */
+export const AI_CHAT_TIMEOUT_MS = 45_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(
+        new Error(
+          `${label} timed out after ${Math.round(ms / 1000)}s — the free AI model is overloaded. Wait a moment and try again.`,
+        ),
+      );
+    }, ms);
+    promise.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
+
 /**
  * One chat call, routed by build: Solo talks to the provider directly via
  * Rust; Team sends prompts to kite-server, which holds the API key.
@@ -15,12 +40,14 @@ export async function aiChat(
   system: string,
   user: string,
 ): Promise<string> {
-  if (isTauriRuntime()) {
-    return soloProviderChat(settings, system, user);
-  }
-  const companyId = getActiveCompanyId();
-  if (!companyId) throw new Error("No company is open.");
-  return remoteAiChat(companyId, { system, user });
+  const call = isTauriRuntime()
+    ? soloProviderChat(settings, system, user)
+    : (async () => {
+        const companyId = getActiveCompanyId();
+        if (!companyId) throw new Error("No company is open.");
+        return remoteAiChat(companyId, { system, user });
+      })();
+  return withTimeout(call, AI_CHAT_TIMEOUT_MS, "AI request");
 }
 
 /** Quick settings check — a one-token round trip. */

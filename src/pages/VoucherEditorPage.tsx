@@ -140,11 +140,24 @@ export function VoucherEditorPage() {
   const [aiReady, setAiReady] = useState(false);
   const [aiSentence, setAiSentence] = useState(() => params.get("ai") || "");
   const [aiBusy, setAiBusy] = useState(false);
+  const [aiWaitSecs, setAiWaitSecs] = useState(0);
   const [aiWarnings, setAiWarnings] = useState<string[]>([]);
   const [aiApplied, setAiApplied] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const autoDrafted = useRef(false);
   const speech = useSpeechInput((t) => setAiSentence(t));
+
+  useEffect(() => {
+    if (!aiBusy) {
+      setAiWaitSecs(0);
+      return;
+    }
+    const started = Date.now();
+    const id = window.setInterval(() => {
+      setAiWaitSecs(Math.floor((Date.now() - started) / 1000));
+    }, 500);
+    return () => window.clearInterval(id);
+  }, [aiBusy]);
 
   const canHaveStock = voucherType === "sales" || voucherType === "purchase";
 
@@ -676,9 +689,15 @@ export function VoucherEditorPage() {
               disabled={aiBusy || !aiSentence.trim()}
               onClick={() => void onAiDraft()}
             >
-              {aiBusy ? "Drafting…" : "Draft voucher"}
+              {aiBusy
+                ? `Drafting… ${aiWaitSecs}s`
+                : "Draft voucher"}
             </button>
-            <span className="muted small">or fill the form manually below</span>
+            <span className="muted small">
+              {aiBusy
+                ? "Free models can take 15–40s — the window stays usable"
+                : "or fill the form manually below"}
+            </span>
           </div>
           {aiApplied && (
             <p className="notice">

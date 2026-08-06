@@ -102,6 +102,9 @@ struct HttpRequestArgs {
     body: Option<String>,
     basic_user: Option<String>,
     basic_pass: Option<String>,
+    /// Per-request timeout in seconds (clamped 5–90). Defaults to 30.
+    #[serde(default)]
+    timeout_secs: Option<u64>,
 }
 
 #[derive(Serialize)]
@@ -112,10 +115,13 @@ struct HttpResponsePayload {
     headers: HashMap<String, String>,
 }
 
+/// Async so long AI / API calls don't freeze the GTK/WebKit window
+/// (blocking reqwest on a sync command triggers Linux "Not Responding").
 #[tauri::command]
-fn http_request(args: HttpRequestArgs) -> Result<HttpResponsePayload, String> {
-    let client = reqwest::blocking::Client::builder()
-        .timeout(std::time::Duration::from_secs(60))
+async fn http_request(args: HttpRequestArgs) -> Result<HttpResponsePayload, String> {
+    let secs = args.timeout_secs.unwrap_or(30).clamp(5, 90);
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(secs))
         .build()
         .map_err(|e| e.to_string())?;
 
@@ -140,7 +146,18 @@ fn http_request(args: HttpRequestArgs) -> Result<HttpResponsePayload, String> {
         builder = builder.body(body.clone());
     }
 
-    let response = builder.send().map_err(|e| format!("HTTP request failed: {e}"))?;
+    let response = builder
+        .send()
+        .await
+        .map_err(|e| {
+            if e.is_timeout() {
+                format!(
+                    "Request timed out after {secs}s — the AI provider is slow or overloaded. Try again."
+                )
+            } else {
+                format!("HTTP request failed: {e}")
+            }
+        })?;
     let status = response.status().as_u16();
     let mut headers = HashMap::new();
     for (k, v) in response.headers().iter() {
@@ -148,7 +165,7 @@ fn http_request(args: HttpRequestArgs) -> Result<HttpResponsePayload, String> {
             headers.insert(k.to_string(), val.to_string());
         }
     }
-    let body = response.text().map_err(|e| e.to_string())?;
+    let body = response.text().await.map_err(|e| e.to_string())?;
 
     Ok(HttpResponsePayload {
         status,

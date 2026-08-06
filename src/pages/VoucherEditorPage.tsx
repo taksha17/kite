@@ -337,12 +337,14 @@ export function VoucherEditorPage() {
     }
     if (draft.partyId) setPartyId(draft.partyId);
     if (draft.placeOfSupply) setPlaceOfSupply(draft.placeOfSupply);
-    if (draft.gstRate != null) {
-      setGstRate(draft.gstRate);
-    } else if (draft.stockLines[0]?.itemId) {
-      const item = stockItems.find((i) => i.id === draft.stockLines[0].itemId);
-      if (item) setGstRate(item.gst_rate);
+
+    let nextGst = draft.gstRate;
+    if (nextGst == null && draft.stockLines[0]?.itemId) {
+      nextGst = stockItems.find((i) => i.id === draft.stockLines[0].itemId)
+        ?.gst_rate;
     }
+    if (nextGst != null) setGstRate(nextGst);
+
     if (draft.hsn) {
       setHsn(draft.hsn);
     } else if (draft.stockLines[0]?.itemId) {
@@ -354,25 +356,39 @@ export function VoucherEditorPage() {
       const defGodown =
         godowns.find((g) => g.is_default)?.id || godowns[0]?.id || "";
       setUseStock(true);
-      setStockLines(
-        draft.stockLines.map((line) => {
-          const item = stockItems.find((i) => i.id === line.itemId);
-          const fallbackRate =
-            effectiveType === "purchase"
-              ? item?.purchase_rate
-              : item?.sales_rate;
-          return {
-            itemId: line.itemId ?? "",
-            godownId: defGodown,
-            qty: String(line.qty ?? 1),
-            rate: String(line.rate ?? fallbackRate ?? 0),
-            batchNo: "",
-            serialNo: "",
-            lineDescription: line.description ?? "",
-          };
-        }),
+      const mapped = draft.stockLines.map((line) => {
+        const item = stockItems.find((i) => i.id === line.itemId);
+        const fallbackRate =
+          effectiveType === "purchase"
+            ? item?.purchase_rate
+            : item?.sales_rate;
+        // Prefer AI rate, then derive from taxable÷qty, then item master rate.
+        let rate = line.rate;
+        if (rate == null && draft.taxable != null && (line.qty || 1) > 0) {
+          rate =
+            Math.round((draft.taxable / (line.qty || 1)) * 100) / 100;
+        }
+        if (rate == null) rate = fallbackRate ?? 0;
+        return {
+          itemId: line.itemId ?? "",
+          godownId: defGodown,
+          qty: String(line.qty ?? 1),
+          rate: String(rate),
+          batchNo: "",
+          serialNo: "",
+          lineDescription: line.description ?? "",
+        };
+      });
+      setStockLines(mapped);
+      // Keep taxable in sync so the GST panel isn't blank while stock is on.
+      const stockTotal = mapped.reduce(
+        (sum, l) => sum + (Number(l.qty) || 0) * (Number(l.rate) || 0),
+        0,
       );
+      if (stockTotal > 0) setTaxable(String(Math.round(stockTotal * 100) / 100));
+      else if (draft.taxable != null) setTaxable(String(draft.taxable));
     } else if (draft.taxable != null) {
+      setUseStock(false);
       setTaxable(String(draft.taxable));
     }
   }
@@ -670,11 +686,23 @@ export function VoucherEditorPage() {
             </p>
           )}
           {aiWarnings.length > 0 && (
-            <ul className="muted small" style={{ marginBottom: 0 }}>
-              {aiWarnings.map((w, i) => (
-                <li key={i}>{w}</li>
-              ))}
-            </ul>
+            <div
+              className="warn-text small"
+              style={{
+                marginTop: "0.5rem",
+                border: "1px solid var(--line)",
+                borderRadius: 8,
+                padding: "0.5rem 0.7rem",
+                background: "var(--warn-soft)",
+              }}
+            >
+              <strong>Needs your attention:</strong>
+              <ul style={{ margin: "0.3rem 0 0", paddingLeft: "1.1rem" }}>
+                {aiWarnings.map((w, i) => (
+                  <li key={i}>{w}</li>
+                ))}
+              </ul>
+            </div>
           )}
         </section>
       )}

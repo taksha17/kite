@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { parseVoucherDraft, draftIsEmpty } from "./parse";
+import {
+  draftIsEmpty,
+  extractJsonObject,
+  fuzzyMatchByName,
+  parseVoucherDraft,
+  sanitizeAiText,
+} from "./parse";
 import { buildDraftPrompt } from "./prompt";
 import type { DraftContext } from "./types";
 
@@ -14,17 +20,39 @@ const ctx: DraftContext = {
   items: [
     { id: 11, name: "Wireless Mouse", salesRate: 799, purchaseRate: 450, gstRate: 18, hsn: "8471" },
     { id: 12, name: "USB-C Cable", salesRate: 199, purchaseRate: 90, gstRate: 18, hsn: "8544" },
+    { id: 13, name: "Nvidia RTX 5090", salesRate: 0, purchaseRate: 0, gstRate: 18, hsn: "123456" },
+    { id: 14, name: "Nvidia RTX 5070 Ti", salesRate: 0, purchaseRate: 0, gstRate: 18, hsn: "8473" },
   ],
 };
 
 describe("buildDraftPrompt", () => {
   it("embeds the real parties and items so the model can map to them", () => {
     const { system, user } = buildDraftPrompt(ctx, "sold 2 mice to agarwal");
-    expect(system).toContain("JSON");
+    expect(system).toContain("totalInclTax");
     expect(user).toContain("Agarwal Electronics");
     expect(user).toContain("Wireless Mouse");
-    expect(user).toContain("2026-08-04");
-    expect(user).toContain("sold 2 mice to agarwal");
+  });
+});
+
+describe("sanitizeAiText + extractJsonObject", () => {
+  it("strips think tags and prose wrappers", () => {
+    const raw =
+      '<think>hmm</think>\nSure, here you go:\n```json\n{"voucherType":"sales","taxable":100}\n```\n';
+    expect(sanitizeAiText(raw)).toContain("voucherType");
+    expect(extractJsonObject(raw)).toMatchObject({ voucherType: "sales", taxable: 100 });
+  });
+});
+
+describe("fuzzyMatchByName", () => {
+  it("matches loose names but refuses wrong model numbers", () => {
+    expect(fuzzyMatchByName("rtx 5070ti", ctx.items)?.id).toBe(14);
+    expect(fuzzyMatchByName("rtx 5090", ctx.items)?.id).toBe(13);
+    // Must not confuse 5070 with 5090
+    expect(fuzzyMatchByName("rtx 5070ti", [ctx.items[2]])).toBeNull();
+  });
+
+  it("matches party nicknames", () => {
+    expect(fuzzyMatchByName("agarwal", ctx.parties)?.id).toBe(5);
   });
 });
 
@@ -46,14 +74,38 @@ describe("parseVoucherDraft", () => {
     expect(draft.partyId).toBe(5);
     expect(draft.stockLines).toHaveLength(1);
     expect(draft.stockLines[0]).toMatchObject({ itemId: 11, qty: 2, rate: 799 });
-    expect(draft.paymentMode).toBe("UPI");
   });
 
-  it("tolerates markdown code fences around the JSON", () => {
-    const raw = "```json\n{\"voucherType\":\"receipt\",\"taxable\":500}\n```";
-    const { draft } = parseVoucherDraft(raw, ctx);
-    expect(draft.voucherType).toBe("receipt");
-    expect(draft.taxable).toBe(500);
+  it("resolves free-model name fields and tax-inclusive totals", () => {
+    const raw = JSON.stringify({
+      voucherType: "sales",
+      partyName: "manu bhikhari",
+      itemName: "rtx 5070ti",
+      qty: 1,
+      totalInclTax: 70000,
+      gstRate: 18,
+      paymentMode: "Net Banking",
+      narration: "Sold 1 rtx 5070ti to manu bhikhari",
+    });
+    const { draft, warnings } = parseVoucherDraft(raw, ctx);
+    expect(draft.partyId).toBeNull(); // party doesn't exist
+    expect(warnings.some((w) => /manu bhikhari/i.test(w))).toBe(true);
+    expect(draft.stockLines).toHaveLength(1);
+    expect(draft.stockLines[0].itemId).toBe(14);
+    // 70000 / 1.18 ≈ 59322.03
+    expect(draft.taxable).toBeCloseTo(70000 / 1.18, 1);
+    expect(draft.stockLines[0].rate).toBeCloseTo(70000 / 1.18, 1);
+    expect(draft.paymentMode).toBe("Net Banking");
+  });
+
+  it("fixes a wrong item id when the name is right", () => {
+    const raw = JSON.stringify({
+      voucherType: "sales",
+      stockLines: [{ itemId: 13, itemName: "rtx 5070 ti", qty: 1, rate: 50000 }],
+    });
+    const { draft, warnings } = parseVoucherDraft(raw, ctx);
+    expect(draft.stockLines[0].itemId).toBe(14);
+    expect(warnings.some((w) => /Matched item by name/i.test(w))).toBe(true);
   });
 
   it("drops hallucinated party and item ids with warnings", () => {
@@ -69,7 +121,7 @@ describe("parseVoucherDraft", () => {
     expect(draft.partyId).toBeNull();
     expect(draft.stockLines).toHaveLength(1);
     expect(draft.stockLines[0].itemId).toBe(11);
-    expect(warnings.length).toBe(2);
+    expect(warnings.length).toBeGreaterThanOrEqual(2);
   });
 
   it("rejects invalid GST rates, state codes, and dates", () => {

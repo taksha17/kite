@@ -25,6 +25,8 @@ export interface InvoiceParty {
   stateCode: string;
   email: string;
   address: string;
+  city: string;
+  pin: string;
 }
 
 export interface InvoiceShipTo {
@@ -81,6 +83,14 @@ export interface SalesInvoiceData {
   ewbDate: string;
   ewbValidUpto: string;
   transDistance: string;
+  irn: string;
+  irnAckNo: string;
+  irnAckDate: string;
+  /** SignedQRCode JWT from the IRP — rendered as the e-invoice QR */
+  irnSignedQr: string;
+  /** "ACT" active, "CNL" cancelled */
+  irnStatus: string;
+  irnCancelDate: string;
   company: InvoiceCompany;
   party: InvoiceParty;
   shipTo: InvoiceShipTo;

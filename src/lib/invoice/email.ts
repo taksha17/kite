@@ -52,7 +52,7 @@ export async function emailSalesInvoice(
       toEmail: to,
       subject,
       body,
-      pdfBase64: salesInvoicePdfBase64(data),
+      pdfBase64: await salesInvoicePdfBase64(data),
       pdfFilename: invoiceFileName(data),
       useStarttls: smtp.useStarttls,
     },

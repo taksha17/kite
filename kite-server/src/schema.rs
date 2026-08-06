@@ -69,6 +69,12 @@ pub const COMPANY_SCHEMA_STATEMENTS: &[&str] = &[
   ewb_date TEXT,
   ewb_valid_upto TEXT,
   trans_distance TEXT,
+  irn TEXT,
+  irn_ack_no TEXT,
+  irn_ack_date TEXT,
+  irn_signed_qr TEXT,
+  irn_status TEXT,
+  irn_cancel_date TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 )"#,
     r#"CREATE TABLE IF NOT EXISTS voucher_line (
@@ -361,6 +367,36 @@ pub const COMPANY_COLUMN_MIGRATIONS: &[ColumnMigration] = &[
         table: "voucher",
         column: "trans_distance",
         ddl: "ALTER TABLE voucher ADD COLUMN trans_distance TEXT",
+    },
+    ColumnMigration {
+        table: "voucher",
+        column: "irn",
+        ddl: "ALTER TABLE voucher ADD COLUMN irn TEXT",
+    },
+    ColumnMigration {
+        table: "voucher",
+        column: "irn_ack_no",
+        ddl: "ALTER TABLE voucher ADD COLUMN irn_ack_no TEXT",
+    },
+    ColumnMigration {
+        table: "voucher",
+        column: "irn_ack_date",
+        ddl: "ALTER TABLE voucher ADD COLUMN irn_ack_date TEXT",
+    },
+    ColumnMigration {
+        table: "voucher",
+        column: "irn_signed_qr",
+        ddl: "ALTER TABLE voucher ADD COLUMN irn_signed_qr TEXT",
+    },
+    ColumnMigration {
+        table: "voucher",
+        column: "irn_status",
+        ddl: "ALTER TABLE voucher ADD COLUMN irn_status TEXT",
+    },
+    ColumnMigration {
+        table: "voucher",
+        column: "irn_cancel_date",
+        ddl: "ALTER TABLE voucher ADD COLUMN irn_cancel_date TEXT",
     },
 ];
 

@@ -33,7 +33,7 @@ export function extractPincode(text: string): number | null {
   return n >= 100000 && n <= 999999 ? n : null;
 }
 
-function splitAddress(addr: string): { line1: string; line2: string; place: string } {
+export function splitAddress(addr: string): { line1: string; line2: string; place: string } {
   const lines = (addr || "")
     .split(/\r?\n/)
     .map((l) => l.trim())
@@ -72,7 +72,7 @@ const UNIT_MAP: Record<string, string> = {
   qtl: "QTL",
 };
 
-function mapQtyUnit(symbol: string): string {
+export function mapQtyUnit(symbol: string): string {
   const key = (symbol || "").trim().toLowerCase();
   if (!key) return "NOS";
   const upper = key.toUpperCase();

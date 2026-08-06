@@ -4,10 +4,16 @@ import { formatInr } from "../lib/accounting/engine";
 import { INDIA_STATES } from "../lib/accounting/gst";
 import { extractPincode } from "../lib/ewaybill/buildPayload";
 import { generateEwayBillForInvoice } from "../lib/ewaybill/client";
+import {
+  cancelIrnForInvoice,
+  generateIrnForInvoice,
+} from "../lib/einvoice/client";
 import { fetchSalesInvoice } from "../lib/invoice/data";
 import { emailSalesInvoice } from "../lib/invoice/email";
 import { downloadSalesInvoicePdf } from "../lib/invoice/pdf";
+import { irnQrDataUrl } from "../lib/invoice/qr";
 import type { SalesInvoiceData } from "../lib/invoice/types";
+import { isTauriRuntime } from "../lib/server/remote";
 import { useApp } from "../state/AppContext";
 
 function stateLabel(code: string): string {
@@ -30,6 +36,11 @@ export function InvoicePage() {
   const [transMode, setTransMode] = useState("1");
   const [fromPin, setFromPin] = useState("");
   const [toPin, setToPin] = useState("");
+  const [einvBusy, setEinvBusy] = useState(false);
+  const [irnQr, setIrnQr] = useState("");
+  const [showCancel, setShowCancel] = useState(false);
+  const [cnlReason, setCnlReason] = useState("2");
+  const [cnlRemark, setCnlRemark] = useState("");
 
   useEffect(() => {
     if (!company || !id) return;
@@ -89,6 +100,20 @@ export function InvoicePage() {
     window.print();
   }
 
+  useEffect(() => {
+    let cancelled = false;
+    if (data?.irnSignedQr && data.irnStatus !== "CNL") {
+      void irnQrDataUrl(data.irnSignedQr).then((url) => {
+        if (!cancelled) setIrnQr(url);
+      });
+    } else {
+      setIrnQr("");
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [data?.irnSignedQr, data?.irnStatus]);
+
   async function onGenerateEwb() {
     if (!data) return;
     setEwbBusy(true);
@@ -114,6 +139,43 @@ export function InvoicePage() {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setEwbBusy(false);
+    }
+  }
+
+  async function onGenerateIrn() {
+    if (!data) return;
+    setEinvBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const result = await generateIrnForInvoice(data);
+      const refreshed = await fetchSalesInvoice(data.voucherId);
+      setData(refreshed);
+      setNotice(
+        `e-Invoice registered — Ack ${result.ackNo || "—"} · ${result.ackDt || ""}`.trim(),
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setEinvBusy(false);
+    }
+  }
+
+  async function onCancelIrn() {
+    if (!data) return;
+    setEinvBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const result = await cancelIrnForInvoice(data, cnlReason, cnlRemark);
+      const refreshed = await fetchSalesInvoice(data.voucherId);
+      setData(refreshed);
+      setShowCancel(false);
+      setNotice(`IRN cancelled${result.cancelDate ? ` on ${result.cancelDate}` : ""}.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setEinvBusy(false);
     }
   }
 
@@ -298,6 +360,105 @@ export function InvoicePage() {
         )}
       </section>
 
+      <section className="panel no-print" style={{ marginBottom: "1rem" }}>
+        <h2 style={{ marginTop: 0 }}>e-Invoice (IRN)</h2>
+        {!isTauriRuntime() ? (
+          <p className="muted small">
+            e-Invoicing currently runs from the desktop app (the portal&apos;s
+            RSA step needs the native crypto). Open this invoice in Kite Solo
+            to generate the IRN.
+          </p>
+        ) : data.irn ? (
+          <div>
+            <p className="small" style={{ wordBreak: "break-all" }}>
+              <strong>IRN:</strong>{" "}
+              <span className="mono">{data.irn}</span>
+            </p>
+            <p className="muted small">
+              Ack {data.irnAckNo || "—"} · {data.irnAckDate || "—"}
+              {data.irnStatus === "CNL"
+                ? ` · CANCELLED ${data.irnCancelDate || ""}`
+                : " · Active"}
+            </p>
+            {data.irnStatus !== "CNL" && !showCancel && (
+              <button
+                type="button"
+                className="ghost btn"
+                disabled={einvBusy || busy}
+                onClick={() => setShowCancel(true)}
+              >
+                Cancel IRN…
+              </button>
+            )}
+            {data.irnStatus !== "CNL" && showCancel && (
+              <div style={{ marginTop: "0.5rem" }}>
+                <p className="muted small">
+                  Cancellation is only possible within 24 hours of generation
+                  (the portal enforces this).
+                </p>
+                <div className="form-row">
+                  <label>
+                    Reason
+                    <select
+                      value={cnlReason}
+                      onChange={(e) => setCnlReason(e.target.value)}
+                    >
+                      <option value="1">Duplicate</option>
+                      <option value="2">Data entry mistake</option>
+                      <option value="3">Order cancelled</option>
+                      <option value="4">Others</option>
+                    </select>
+                  </label>
+                  <label>
+                    Remark
+                    <input
+                      value={cnlRemark}
+                      onChange={(e) => setCnlRemark(e.target.value)}
+                      placeholder="Wrong GSTIN on party"
+                      maxLength={100}
+                    />
+                  </label>
+                </div>
+                <div className="cta-row">
+                  <button
+                    type="button"
+                    className="secondary"
+                    disabled={einvBusy || busy || !cnlRemark.trim()}
+                    onClick={() => void onCancelIrn()}
+                  >
+                    {einvBusy ? "Cancelling…" : "Confirm cancel IRN"}
+                  </button>
+                  <button
+                    type="button"
+                    className="ghost btn"
+                    onClick={() => setShowCancel(false)}
+                  >
+                    Back
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <p className="muted small">
+              Registers this B2B invoice with the e-invoice portal and prints
+              the signed QR + IRN on the PDF. Uses credentials under{" "}
+              <Link to="/companies">Companies → e-Invoice (IRP API)</Link>.
+              Party must have a GSTIN and PIN code.
+            </p>
+            <button
+              type="button"
+              className="primary"
+              disabled={einvBusy || busy}
+              onClick={() => void onGenerateIrn()}
+            >
+              {einvBusy ? "Registering…" : "Generate IRN (e-invoice)"}
+            </button>
+          </>
+        )}
+      </section>
+
       <section className="panel invoice-sheet">
         <div className="invoice-title-row">
           <h2 className="invoice-title">Tax Invoice</h2>
@@ -404,6 +565,12 @@ export function InvoicePage() {
               <p className="muted small">
                 e-Way bill: {data.ewbNo}
                 {data.ewbValidUpto ? ` · valid ${data.ewbValidUpto}` : ""}
+              </p>
+            )}
+            {data.irn && (
+              <p className="muted small">
+                e-Invoice IRN: {data.irn.slice(0, 20)}…
+                {data.irnStatus === "CNL" ? " (CANCELLED)" : ""}
               </p>
             )}
             <p className="muted small">
@@ -544,6 +711,43 @@ export function InvoicePage() {
             </div>
           </div>
         </div>
+
+        {data.irn && (
+          <div
+            style={{
+              display: "flex",
+              gap: "0.9rem",
+              alignItems: "flex-start",
+              marginTop: "1rem",
+            }}
+          >
+            {irnQr && (
+              <img
+                src={irnQr}
+                alt="e-Invoice QR"
+                style={{ width: 86, height: 86 }}
+              />
+            )}
+            <div className="small">
+              <strong>
+                e-Invoice{data.irnStatus === "CNL" ? " — CANCELLED" : ""}
+              </strong>
+              <p
+                className="muted small"
+                style={{ wordBreak: "break-all", margin: "0.2rem 0" }}
+              >
+                IRN: {data.irn}
+              </p>
+              <p className="muted small" style={{ margin: "0.2rem 0" }}>
+                Ack No: {data.irnAckNo || "—"} · Ack Date:{" "}
+                {data.irnAckDate || "—"}
+                {data.irnStatus === "CNL"
+                  ? ` · Cancelled: ${data.irnCancelDate || "—"}`
+                  : ""}
+              </p>
+            </div>
+          </div>
+        )}
 
         <p className="small" style={{ marginTop: "1rem" }}>
           <strong>Amount in words:</strong> {data.amountInWords}

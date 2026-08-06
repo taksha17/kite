@@ -27,6 +27,14 @@ import {
   type NicEwayCredentials,
 } from "../lib/db/ewaybill";
 import { testNicAuth } from "../lib/ewaybill/client";
+import {
+  emptyIrpCredentials,
+  getIrpCredentials,
+  IRP_PRESET_URLS,
+  saveIrpCredentials,
+} from "../lib/db/einvoice";
+import type { IrpCredentials } from "../lib/einvoice/types";
+import { testIrpAuth } from "../lib/einvoice/client";
 import { testAiConnection } from "../lib/ai/client";
 import { AI_DEFAULT_MODELS, type AiProvider, type AiSettings } from "../lib/ai/types";
 import { aiConfigured, emptyAiSettings, getAiSettings, saveAiSettings } from "../lib/db/ai";
@@ -82,6 +90,7 @@ export function CompaniesPage() {
   });
 
   const [nic, setNic] = useState<NicEwayCredentials>(emptyNicCredentials());
+  const [irp, setIrp] = useState<IrpCredentials>(emptyIrpCredentials());
   const [ai, setAi] = useState<AiSettings>(emptyAiSettings());
 
   useEffect(() => {
@@ -93,8 +102,9 @@ export function CompaniesPage() {
       getCompanyProfile(),
       getSmtpSettings(),
       getNicCredentials(),
+      getIrpCredentials(),
       getAiSettings(),
-    ]).then(([p, s, n, aiSettings]) => {
+    ]).then(([p, s, n, irpCreds, aiSettings]) => {
         setAddress(p.address);
         setPhone(p.phone);
         setEmail(p.email);
@@ -113,6 +123,10 @@ export function CompaniesPage() {
         setNic({
           ...n,
           gstin: n.gstin || company.gstin || "",
+        });
+        setIrp({
+          ...irpCreds,
+          gstin: irpCreds.gstin || company.gstin || "",
         });
         setAi(aiSettings);
       },
@@ -847,6 +861,174 @@ export function CompaniesPage() {
                       });
                       await testNicAuth();
                       setNotice("NIC Auth succeeded — credentials look good.");
+                    } catch (err) {
+                      setError(
+                        err instanceof Error ? err.message : String(err),
+                      );
+                    } finally {
+                      setBusy(false);
+                    }
+                  })();
+                }}
+              >
+                Test Auth
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
+
+      {company && allowed("manage_company") && (
+        <section className="panel" style={{ marginTop: "1rem" }}>
+          <h2>e-Invoice (IRP API)</h2>
+          <p className="muted small">
+            Register B2B invoices with the government e-invoice portal (IRN +
+            signed QR on the invoice). Mandatory above ₹5 crore turnover;
+            optional below it. Enable API access on the e-invoice portal under
+            your GSTIN, then test with sandbox credentials first. Default base
+            URL: {IRP_PRESET_URLS[irp.environment]}.
+          </p>
+          <form
+            className="form"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setBusy(true);
+              setError(null);
+              try {
+                await saveIrpCredentials({
+                  ...irp,
+                  gstin: (irp.gstin || company.gstin || "").trim().toUpperCase(),
+                });
+                setNotice("IRP e-invoice credentials saved.");
+              } catch (err) {
+                setError(err instanceof Error ? err.message : String(err));
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            <div className="form-row">
+              <label>
+                Environment
+                <select
+                  value={irp.environment}
+                  onChange={(e) =>
+                    setIrp((c) => ({
+                      ...c,
+                      environment: e.target.value as "sandbox" | "production",
+                    }))
+                  }
+                >
+                  <option value="sandbox">Sandbox</option>
+                  <option value="production">Production</option>
+                </select>
+              </label>
+              <label>
+                Base URL override (optional)
+                <input
+                  value={irp.baseUrl}
+                  onChange={(e) =>
+                    setIrp((c) => ({ ...c, baseUrl: e.target.value }))
+                  }
+                  placeholder={IRP_PRESET_URLS[irp.environment]}
+                />
+              </label>
+            </div>
+            <div className="form-row">
+              <label>
+                GSTIN
+                <input
+                  value={irp.gstin}
+                  onChange={(e) =>
+                    setIrp((c) => ({ ...c, gstin: e.target.value }))
+                  }
+                  placeholder={company.gstin || "29AAAAA0000A1Z5"}
+                />
+              </label>
+              <label>
+                Username (API)
+                <input
+                  value={irp.username}
+                  onChange={(e) =>
+                    setIrp((c) => ({ ...c, username: e.target.value }))
+                  }
+                  autoComplete="off"
+                />
+              </label>
+            </div>
+            <div className="form-row">
+              <label>
+                Password
+                <input
+                  type="password"
+                  value={irp.password}
+                  onChange={(e) =>
+                    setIrp((c) => ({ ...c, password: e.target.value }))
+                  }
+                  autoComplete="new-password"
+                />
+              </label>
+              <label>
+                Client ID
+                <input
+                  value={irp.clientId}
+                  onChange={(e) =>
+                    setIrp((c) => ({ ...c, clientId: e.target.value }))
+                  }
+                />
+              </label>
+            </div>
+            <label>
+              Client secret
+              <input
+                type="password"
+                value={irp.clientSecret}
+                onChange={(e) =>
+                  setIrp((c) => ({ ...c, clientSecret: e.target.value }))
+                }
+                autoComplete="new-password"
+              />
+            </label>
+            <label>
+              IRP RSA public key (PEM)
+              <textarea
+                value={irp.publicKeyPem}
+                onChange={(e) =>
+                  setIrp((c) => ({ ...c, publicKeyPem: e.target.value }))
+                }
+                rows={5}
+                placeholder={
+                  "-----BEGIN PUBLIC KEY-----\n…\n-----END PUBLIC KEY-----"
+                }
+                spellCheck={false}
+              />
+            </label>
+            <p className="muted small">
+              The e-invoice portal public key is different from the e-way bill
+              one — download it from the IRP sandbox/portal developer section.
+              Stored only in this company&apos;s meta.
+            </p>
+            <div className="cta-row">
+              <button className="secondary" type="submit" disabled={busy}>
+                Save IRP settings
+              </button>
+              <button
+                type="button"
+                className="ghost btn"
+                disabled={busy}
+                onClick={() => {
+                  void (async () => {
+                    setBusy(true);
+                    setError(null);
+                    try {
+                      await saveIrpCredentials({
+                        ...irp,
+                        gstin: (irp.gstin || company.gstin || "")
+                          .trim()
+                          .toUpperCase(),
+                      });
+                      await testIrpAuth();
+                      setNotice("IRP Auth succeeded — credentials look good.");
                     } catch (err) {
                       setError(
                         err instanceof Error ? err.message : String(err),

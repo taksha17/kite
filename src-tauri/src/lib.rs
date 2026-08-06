@@ -1,3 +1,4 @@
+mod einvoice;
 mod ewaybill;
 
 use base64::Engine;
@@ -168,7 +169,10 @@ pub fn run() {
             send_invoice_email,
             http_request,
             ewaybill::nic_eway_auth,
-            ewaybill::nic_eway_generate
+            ewaybill::nic_eway_generate,
+            einvoice::nic_einv_auth,
+            einvoice::nic_einv_generate,
+            einvoice::nic_einv_cancel
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -2,6 +2,7 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile } from "@tauri-apps/plugin-fs";
 import { jsPDF } from "jspdf";
 import { INDIA_STATES } from "../accounting/gst";
+import { irnQrDataUrl } from "./qr";
 import type { SalesInvoiceData } from "./types";
 
 function stateName(code: string): string {
@@ -46,7 +47,10 @@ function wrapText(
   return y;
 }
 
-export function buildSalesInvoicePdf(data: SalesInvoiceData): jsPDF {
+export function buildSalesInvoicePdf(
+  data: SalesInvoiceData,
+  irnQrPngDataUrl = "",
+): jsPDF {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const margin = 36;
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -342,6 +346,40 @@ export function buildSalesInvoicePdf(data: SalesInvoiceData): jsPDF {
   }
 
   y = Math.max(y, ty) + 12;
+
+  if (data.irn) {
+    const cancelled = data.irnStatus === "CNL";
+    ensureSpace(96);
+    const blockTop = y;
+    let tx = margin;
+    if (irnQrPngDataUrl && !cancelled) {
+      try {
+        doc.addImage(irnQrPngDataUrl, "PNG", margin, blockTop, 72, 72);
+        tx = margin + 82;
+      } catch {
+        tx = margin;
+      }
+    }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(cancelled ? "e-Invoice — CANCELLED" : "e-Invoice", tx, blockTop + 2);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    let qy = blockTop + 13;
+    qy = wrapText(doc, `IRN: ${data.irn}`, tx, qy, pageWidth - margin - tx, 9);
+    qy += 2;
+    doc.text(
+      `Ack No: ${data.irnAckNo || "—"}    Ack Date: ${data.irnAckDate || "—"}`,
+      tx,
+      qy,
+    );
+    if (cancelled) {
+      qy += 10;
+      doc.text(`Cancelled on: ${data.irnCancelDate || "—"}`, tx, qy);
+    }
+    y = Math.max(blockTop + 78, qy + 12);
+  }
+
   ensureSpace(36);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
@@ -386,8 +424,14 @@ export function buildSalesInvoicePdf(data: SalesInvoiceData): jsPDF {
   return doc;
 }
 
-export function salesInvoicePdfBase64(data: SalesInvoiceData): string {
-  const doc = buildSalesInvoicePdf(data);
+export async function salesInvoicePdfBase64(
+  data: SalesInvoiceData,
+): Promise<string> {
+  const qr =
+    data.irnSignedQr && data.irnStatus !== "CNL"
+      ? await irnQrDataUrl(data.irnSignedQr)
+      : "";
+  const doc = buildSalesInvoicePdf(data, qr);
   const dataUri = doc.output("datauristring");
   const comma = dataUri.indexOf(",");
   return comma >= 0 ? dataUri.slice(comma + 1) : dataUri;
@@ -397,7 +441,11 @@ export function salesInvoicePdfBase64(data: SalesInvoiceData): string {
 export async function downloadSalesInvoicePdf(
   data: SalesInvoiceData,
 ): Promise<string | null> {
-  const doc = buildSalesInvoicePdf(data);
+  const qr =
+    data.irnSignedQr && data.irnStatus !== "CNL"
+      ? await irnQrDataUrl(data.irnSignedQr)
+      : "";
+  const doc = buildSalesInvoicePdf(data, qr);
   const defaultName = invoiceFileName(data);
   const path = await save({
     title: "Save invoice PDF",

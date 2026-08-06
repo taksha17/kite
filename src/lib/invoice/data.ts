@@ -223,6 +223,12 @@ export async function fetchSalesInvoice(
       ewb_date: string | null;
       ewb_valid_upto: string | null;
       trans_distance: string | null;
+      irn: string | null;
+      irn_ack_no: string | null;
+      irn_ack_date: string | null;
+      irn_signed_qr: string | null;
+      irn_status: string | null;
+      irn_cancel_date: string | null;
     }[]
   >("SELECT * FROM voucher WHERE id = $1", [voucherId]);
 
@@ -238,6 +244,8 @@ export async function fetchSalesInvoice(
     stateCode: "",
     email: "",
     address: "",
+    city: "",
+    pin: "",
   };
   if (v.party_ledger_id) {
     const parties = await db.select<
@@ -263,6 +271,8 @@ export async function fetchSalesInvoice(
         stateCode: p.state_code || "",
         email: p.email || "",
         address: [p.address, cityPin].filter(Boolean).join(", "),
+        city: p.city || "",
+        pin: p.pin || "",
       };
     }
   }
@@ -371,6 +381,12 @@ export async function fetchSalesInvoice(
     ewbDate: v.ewb_date || "",
     ewbValidUpto: v.ewb_valid_upto || "",
     transDistance: v.trans_distance || "",
+    irn: v.irn || "",
+    irnAckNo: v.irn_ack_no || "",
+    irnAckDate: v.irn_ack_date || "",
+    irnSignedQr: v.irn_signed_qr || "",
+    irnStatus: v.irn_status || "",
+    irnCancelDate: v.irn_cancel_date || "",
     company,
     party,
     shipTo: {

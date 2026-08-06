@@ -52,17 +52,17 @@ pub struct NicGenerateResult {
     pub raw: String,
 }
 
-fn b64_encode(bytes: &[u8]) -> String {
+pub(crate) fn b64_encode(bytes: &[u8]) -> String {
     base64::engine::general_purpose::STANDARD.encode(bytes)
 }
 
-fn b64_decode(s: &str) -> Result<Vec<u8>, String> {
+pub(crate) fn b64_decode(s: &str) -> Result<Vec<u8>, String> {
     base64::engine::general_purpose::STANDARD
         .decode(s.trim().as_bytes())
         .map_err(|e| format!("Base64 decode failed: {e}"))
 }
 
-fn normalize_pem(pem: &str) -> String {
+pub(crate) fn normalize_pem(pem: &str) -> String {
     let trimmed = pem.trim();
     if trimmed.contains("BEGIN") {
         return trimmed.to_string();
@@ -74,7 +74,7 @@ fn normalize_pem(pem: &str) -> String {
     )
 }
 
-fn load_public_key(pem: &str) -> Result<RsaPublicKey, String> {
+pub(crate) fn load_public_key(pem: &str) -> Result<RsaPublicKey, String> {
     let pem = normalize_pem(pem);
     RsaPublicKey::from_public_key_pem(&pem)
         .or_else(|_| {
@@ -90,7 +90,7 @@ fn load_public_key(pem: &str) -> Result<RsaPublicKey, String> {
 }
 
 /// RSA/ECB/PKCS1Padding encrypt → Base64 (NIC e-way bill style).
-fn rsa_encrypt_b64(public: &RsaPublicKey, plain: &[u8]) -> Result<String, String> {
+pub(crate) fn rsa_encrypt_b64(public: &RsaPublicKey, plain: &[u8]) -> Result<String, String> {
     let mut rng = rand::thread_rng();
     let enc = public
         .encrypt(&mut rng, Pkcs1v15Encrypt, plain)
@@ -99,7 +99,7 @@ fn rsa_encrypt_b64(public: &RsaPublicKey, plain: &[u8]) -> Result<String, String
 }
 
 /// AES-256-ECB PKCS7 encrypt → Base64.
-fn aes_ecb_encrypt_b64(key: &[u8], plain: &[u8]) -> Result<String, String> {
+pub(crate) fn aes_ecb_encrypt_b64(key: &[u8], plain: &[u8]) -> Result<String, String> {
     use aes::cipher::{block_padding::Pkcs7, BlockEncryptMut, KeyInit};
     use aes::Aes256;
 
@@ -121,7 +121,7 @@ fn aes_ecb_encrypt_b64(key: &[u8], plain: &[u8]) -> Result<String, String> {
 }
 
 /// AES-256-ECB PKCS7 decrypt from Base64.
-fn aes_ecb_decrypt_b64(key: &[u8], cipher_b64: &str) -> Result<Vec<u8>, String> {
+pub(crate) fn aes_ecb_decrypt_b64(key: &[u8], cipher_b64: &str) -> Result<Vec<u8>, String> {
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, KeyInit};
     use aes::Aes256;
 
@@ -142,11 +142,11 @@ fn aes_ecb_decrypt_b64(key: &[u8], cipher_b64: &str) -> Result<Vec<u8>, String> 
         .map_err(|e| format!("AES decrypt failed (check app_key/SEK): {e}"))
 }
 
-fn trim_base(url: &str) -> String {
+pub(crate) fn trim_base(url: &str) -> String {
     url.trim().trim_end_matches('/').to_string()
 }
 
-fn http_post_json(
+pub(crate) fn http_post_json(
     url: &str,
     headers: &HashMap<String, String>,
     body: &str,

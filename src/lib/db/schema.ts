@@ -69,6 +69,12 @@ export const COMPANY_SCHEMA_STATEMENTS = [
     ewb_date TEXT,
     ewb_valid_upto TEXT,
     trans_distance TEXT,
+    irn TEXT,
+    irn_ack_no TEXT,
+    irn_ack_date TEXT,
+    irn_signed_qr TEXT,
+    irn_status TEXT,
+    irn_cancel_date TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`,
   `CREATE TABLE IF NOT EXISTS voucher_line (
@@ -305,6 +311,36 @@ export const COMPANY_COLUMN_MIGRATIONS: { table: string; column: string; ddl: st
     table: "voucher",
     column: "trans_distance",
     ddl: "ALTER TABLE voucher ADD COLUMN trans_distance TEXT",
+  },
+  {
+    table: "voucher",
+    column: "irn",
+    ddl: "ALTER TABLE voucher ADD COLUMN irn TEXT",
+  },
+  {
+    table: "voucher",
+    column: "irn_ack_no",
+    ddl: "ALTER TABLE voucher ADD COLUMN irn_ack_no TEXT",
+  },
+  {
+    table: "voucher",
+    column: "irn_ack_date",
+    ddl: "ALTER TABLE voucher ADD COLUMN irn_ack_date TEXT",
+  },
+  {
+    table: "voucher",
+    column: "irn_signed_qr",
+    ddl: "ALTER TABLE voucher ADD COLUMN irn_signed_qr TEXT",
+  },
+  {
+    table: "voucher",
+    column: "irn_status",
+    ddl: "ALTER TABLE voucher ADD COLUMN irn_status TEXT",
+  },
+  {
+    table: "voucher",
+    column: "irn_cancel_date",
+    ddl: "ALTER TABLE voucher ADD COLUMN irn_cancel_date TEXT",
   },
 ];
 

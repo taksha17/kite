@@ -62,6 +62,7 @@ company setup to GST invoice to Excel export.
 - **Phone-only mode:** run Kite entirely in a phone browser — SQLite-in-WASM on the device, **Google sign-in with snapshots backing up to the owner's own Drive**, restore on a new phone in one tap. No PC, no server — [docs/google-drive.md](./docs/google-drive.md)
 - **PDF invoices:** tax invoice preview + download for Sales vouchers; email via your own SMTP
 - **e-Way bills:** generate NIC e-way bills straight from the invoice (sandbox/production endpoints, per-company credentials)
+- **e-Invoicing (IRN):** register B2B invoices with the government IRP from the desktop app — IRN + signed QR printed on the invoice PDF, cancel-IRN support, free direct NIC API (no GSP fees), sandbox/production presets
 - **AI quick entry (optional, BYOK):** describe a voucher in one sentence and OpenAI/Anthropic/Gemini drafts it into the form for review — the AI can only draft, never post; keys stay server-side on Team, in-app on Solo
 - Reports: Day Book, Ledger, Trial Balance, Profit & Loss, Balance Sheet
 - Balanced double-entry validation before save
@@ -145,6 +146,7 @@ src/lib/server/        Kite Team client (HTTP data layer)
 src/lib/gdrive/        Phone-only mode: Google sign-in + Drive snapshots
 src/lib/ai/            AI quick entry (prompt, strict parse, providers)
 src/lib/ewaybill/      NIC e-way bill client
+src/lib/einvoice/      IRP e-invoice client (IRN + signed QR)
 src-tauri/             Tauri shell (Rust)
 kite-server/           Kite Team server (Rust, axum + sqlx)
 scripts/               Volume-aware dev/build/server/demo scripts
@@ -157,7 +159,8 @@ docs/                  Getting started, deployment
 2. **Done** — PDF invoices + email, e-way bills, Kite Team server + PWA
 3. **Done** — AI quick entry (BYOK, draft-only) on Solo and Team
 4. **Done** — phone-only PWA with Google Drive backup (docs/google-drive.md)
-5. **Next** — bank-statement import, ask-my-books Q&A, bill capture
+5. **Done** — e-invoicing (IRN + signed QR on invoices) via free direct IRP API
+6. **Next** — bank-statement import, ask-my-books Q&A, bill capture
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 

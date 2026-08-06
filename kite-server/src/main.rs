@@ -12,7 +12,7 @@ use kite_server::{api_router, build_state};
 #[derive(Parser)]
 #[command(
     name = "kite-server",
-    about = "Kite Team — multi-user server for Kite books"
+    about = "Kite Enterprise — multi-user server for Kite books"
 )]
 struct Cli {
     #[command(subcommand)]

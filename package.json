@@ -1,8 +1,8 @@
 {
   "name": "kite",
   "private": true,
-  "version": "2.0.0",
-  "description": "Free, open-source accounting for Indian small businesses — GST invoices, e-way bills, inventory and reports. Offline-first desktop app with an optional multi-user team server.",
+  "version": "2.0.1",
+  "description": "Free, open-source accounting for Indian small businesses — GST invoices, e-way bills, inventory and reports. Offline-first desktop app with optional Kite Enterprise multi-user server.",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -16,6 +16,7 @@
     "kite:build": "bash scripts/build.sh",
     "kite:server": "bash scripts/server.sh",
     "kite:server:test": "cd kite-server && cargo test",
+    "kite:package:enterprise": "bash scripts/package-enterprise.sh",
     "kite:icons": "node scripts/make-icons.mjs",
     "kite:demo": "node scripts/demo-walkthrough.mjs"
   },

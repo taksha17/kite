@@ -1,6 +1,6 @@
 [package]
 name = "kite"
-version = "2.0.0"
+version = "2.0.1"
 description = "Kite — lightweight open-source books for Indian SMBs"
 authors = ["Kite contributors"]
 license = "MIT"

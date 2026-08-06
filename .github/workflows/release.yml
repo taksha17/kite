@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   build:
-    name: Build ${{ matrix.name }}
+    name: Build Solo ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -77,6 +77,78 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           name: Kite ${{ github.event.inputs.tag || github.ref_name }}
+          generate_release_notes: true
+          overwrite_files: true
+          files: release/${{ matrix.asset }}
+
+  enterprise:
+    name: Build Enterprise ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x64
+            os: ubuntu-latest
+            package_os: linux
+            bin_name: kite-server
+            asset: kite-enterprise-linux-x64.tar.gz
+          - name: windows-x64
+            os: windows-latest
+            package_os: windows
+            bin_name: kite-server.exe
+            asset: kite-enterprise-windows-x64.zip
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - run: npm ci
+
+      - name: Build web UI
+        run: npm run build
+
+      - name: Build kite-server
+        working-directory: kite-server
+        run: cargo build --release
+
+      - name: Package Enterprise (Linux)
+        if: matrix.package_os == 'linux'
+        run: |
+          bash scripts/package-enterprise.sh \
+            --os linux \
+            --bin kite-server/target/release/kite-server \
+            --out release
+
+      - name: Package Enterprise (Windows)
+        if: matrix.package_os == 'windows'
+        shell: bash
+        run: |
+          bash scripts/package-enterprise.sh \
+            --os windows \
+            --bin kite-server/target/release/kite-server.exe \
+            --out release
+
+      - name: Upload Enterprise asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: Kite ${{ github.event.inputs.tag || github.ref_name }}
+          body: |
+            ## Solo (desktop)
+            Single-user installers for Windows, macOS, and Linux.
+
+            ## Kite Enterprise (Server Edition)
+            Run on one **parent** office PC; staff open a browser on the LAN (any OS).
+            - `kite-enterprise-windows-x64.zip`
+            - `kite-enterprise-linux-x64.tar.gz`
+
+            See [docs/deployment.md](https://github.com/taksha17/kite/blob/main/docs/deployment.md).
           generate_release_notes: true
           overwrite_files: true
           files: release/${{ matrix.asset }}

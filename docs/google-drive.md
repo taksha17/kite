@@ -10,8 +10,8 @@ This is the fourth way to run Kite:
 | Mode | Where data lives | Who it's for |
 | --- | --- | --- |
 | Desktop (Tauri) | Local SQLite files | Owner with a PC/laptop |
-| Kite Team | Self-hosted server | Team sharing one office/server |
-| Kite Team + Tailscale | Same, reachable anywhere | Private access on the go |
+| Kite Enterprise | Self-hosted server (parent PC) | Office sharing one set of books |
+| Kite Enterprise + Tailscale | Same, reachable anywhere | Private access on the go |
 | **Phone-only (this doc)** | **Phone browser + Google Drive** | **Owner whose phone is the billing device** |
 
 ## How it works
@@ -41,7 +41,7 @@ the Drive snapshot as belonging to whichever device wrote it last:
 - If a backup was written by a *different* device and is newer than this
   device's last backup, Kite refuses to overwrite it silently and asks:
   **overwrite** (this device wins) or **restore** (Drive copy wins).
-- Teams that need simultaneous multi-user should use Kite Team instead.
+- Offices that need simultaneous multi-user should use Kite Enterprise instead.
 
 ## Enabling Google sign-in (deployment)
 

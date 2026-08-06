@@ -1,0 +1,15 @@
+[Unit]
+Description=Kite Enterprise server
+After=network.target
+
+[Service]
+Type=simple
+User=kite
+ExecStart=/opt/kite/kite-server serve --data-dir /var/lib/kite --web-dir /opt/kite/dist --host 0.0.0.0 --port 8080
+Restart=on-failure
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/kite
+
+[Install]
+WantedBy=multi-user.target

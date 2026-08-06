@@ -1,5 +1,5 @@
 /**
- * Remote (Kite Team) data layer.
+ * Remote (Kite Enterprise) data layer.
  *
  * In a browser / PWA there is no Tauri SQLite — instead, a RemoteCompanyDb
  * implements the same {execute, select, close, path} surface as the

@@ -40,7 +40,10 @@ Grab the latest build from
 | macOS (Apple Silicon) | [kite-macos-arm64.dmg](https://github.com/taksha17/kite/releases/latest/download/kite-macos-arm64.dmg) |
 | macOS (Intel) | [kite-macos-x64.dmg](https://github.com/taksha17/kite/releases/latest/download/kite-macos-x64.dmg) |
 | Linux (Ubuntu/Debian) | [kite-linux-x64.deb](https://github.com/taksha17/kite/releases/latest/download/kite-linux-x64.deb) |
-| Android / iOS | PWA via your Kite Team server — [docs/deployment.md](./docs/deployment.md) |
+| Android / iOS | PWA via Kite Enterprise — [docs/deployment.md](./docs/deployment.md) |
+| **Enterprise (office)** | Parent PC runs the server; children use any browser — [docs/deployment.md](./docs/deployment.md) |
+| Windows parent (Enterprise) | [kite-enterprise-windows-x64.zip](https://github.com/taksha17/kite/releases/latest/download/kite-enterprise-windows-x64.zip) |
+| Linux parent (Enterprise) | [kite-enterprise-linux-x64.tar.gz](https://github.com/taksha17/kite/releases/latest/download/kite-enterprise-linux-x64.tar.gz) |
 
 Builds are unsigned for now: on Windows click **More info → Run anyway**, on
 macOS **right-click → Open** the first time.
@@ -58,13 +61,13 @@ company setup to GST invoice to Excel export.
 - **GST MVP:** company GST on/off, intra vs inter-state CGST/SGST/IGST split, HSN/SAC, GSTR-1 & GSTR-3B style summaries, **Excel (.xlsx) export**
 - **Inventory MVP:** units, godowns, stock items (fixed purchase rate), sales/purchase stock lines, stock journal, stock summary
 - **Multi-user MVP:** per-company logins, Owner/Accountant/Data Entry roles, voucher audit log
-- **Kite Team:** optional multi-user server (`kite-server`) with the same UI as a PWA — per-company SQLite, JWT sessions, owner-only backups
+- **Kite Enterprise:** optional multi-user server (`kite-server`) for an office — one parent PC holds the books locally; child PCs (any OS) open a browser/PWA — per-company SQLite, JWT sessions, owner-only backups — [docs/deployment.md](./docs/deployment.md)
 - **Phone-only mode:** run Kite entirely in a phone browser — SQLite-in-WASM on the device, **Google sign-in with snapshots backing up to the owner's own Drive**, restore on a new phone in one tap. No PC, no server — [docs/google-drive.md](./docs/google-drive.md)
 - **PDF invoices:** tax invoice preview + download for Sales vouchers; email via your own SMTP
 - **e-Way bills:** generate NIC e-way bills straight from the invoice (sandbox/production endpoints, per-company credentials)
 - **e-Invoicing (IRN):** register B2B invoices with the government IRP from the desktop app — IRN + signed QR printed on the invoice PDF, cancel-IRN support, free direct NIC API (no GSP fees), sandbox/production presets
 - **Bank statement import:** drop in a CSV/Excel statement (HDFC/SBI/ICICI/Axis/Kotak layouts auto-detected) — withdrawals become payments, deposits become receipts, counter-ledgers suggested from party names and your past choices, already-imported rows auto-skipped
-- **AI-first entry (free tier built in):** the AI prompt IS the new-voucher screen — describe a sale in English or Hinglish (or dictate it), **or snap a purchase bill** and a vision model drafts the voucher for review; unknown parties/items from the bill can be created in one click (GSTIN validated); a Cmd-K palette drafts/jumps from anywhere; first-run AI onboarding proposes your ledgers, items and GST setting. The AI can only draft, never post. Bring your own key — **OpenRouter's free models work out of the box (no card, 2-minute setup)** including vision via `openrouter/free`, plus OpenAI/Anthropic/Gemini; keys stay server-side on Team, in-app on Solo
+- **AI-first entry (free tier built in):** the AI prompt IS the new-voucher screen — describe a sale in English or Hinglish (or dictate it), **or snap a purchase bill** and a vision model drafts the voucher for review; unknown parties/items from the bill can be created in one click (GSTIN validated); a Cmd-K palette drafts/jumps from anywhere; first-run AI onboarding proposes your ledgers, items and GST setting. The AI can only draft, never post. Bring your own key — **OpenRouter's free models work out of the box (no card, 2-minute setup)** including vision via `openrouter/free`, plus OpenAI/Anthropic/Gemini; keys stay server-side on Enterprise, in-app on Solo
 - **Ask my books:** type a question (or Ctrl+K) — the AI writes a read-only SQL query, Kite runs it on your company DB, and the answer + table use only those numbers
 - **Open AR (FIFO):** receipts clear the oldest unpaid sales first — bank import matches deposits to remaining open amounts; follow-up and home insights use true overdue
 - **Home insights:** receivables, payables, GST this month, sales vs last month, and low-stock alerts — computed from your books on open
@@ -103,19 +106,19 @@ npm test                          # frontend unit tests (vitest)
 npm run kite:server:test          # server API + auth tests (cargo)
 ```
 
-### Kite Team (optional multi-user server)
+### Kite Enterprise (optional multi-user / office server)
 
-`kite-server` serves the same app over HTTP for a team — one process, one
-directory of per-company SQLite files, users sign in from any browser or an
-installed Android PWA.
+Run **Kite Enterprise** on one parent PC; staff open the same books from any
+browser on the LAN (Windows/macOS/Linux/phone). Prefer the prebuilt packages
+from [Releases](https://github.com/taksha17/kite/releases/latest), or build:
 
 ```bash
 npm run build                                          # web app → dist/
 cd kite-server && cargo build --release
-./target/release/kite-server serve --data-dir ./kite-data --web-dir ../dist
+./target/release/kite-server serve --data-dir ./kite-data --web-dir ../dist --host 0.0.0.0 --port 8080
 ```
 
-Production setup (systemd, HTTPS via Caddy, backup cron):
+Office setup (LAN parent/child, Windows zip / Linux tarball, systemd, HTTPS):
 [docs/deployment.md](./docs/deployment.md).
 
 ### Production builds
@@ -150,13 +153,13 @@ sudo dpkg -i .cache/cargo-target/release/bundle/deb/Kite_0.1.0_amd64.deb
 src/                   React UI + TypeScript accounting engine
 src/lib/accounting/    Pure posting / report math (unit tested)
 src/lib/db/            SQLite schema + company I/O (local and remote)
-src/lib/server/        Kite Team client (HTTP data layer)
+src/lib/server/        Kite Enterprise client (HTTP data layer)
 src/lib/gdrive/        Phone-only mode: Google sign-in + Drive snapshots
 src/lib/ai/            AI quick entry (prompt, strict parse, providers)
 src/lib/ewaybill/      NIC e-way bill client
 src/lib/einvoice/      IRP e-invoice client (IRN + signed QR)
 src-tauri/             Tauri shell (Rust)
-kite-server/           Kite Team server (Rust, axum + sqlx)
+kite-server/           Kite Enterprise server (Rust, axum + sqlx)
 scripts/               Volume-aware dev/build/server/demo scripts
 docs/                  Getting started, deployment
 ```
@@ -164,8 +167,8 @@ docs/                  Getting started, deployment
 ## Roadmap
 
 1. **Done** — core books, GST invoices & Excel reports, inventory, roles & audit
-2. **Done** — PDF invoices + email, e-way bills, Kite Team server + PWA
-3. **Done** — AI quick entry (BYOK, draft-only) on Solo and Team
+2. **Done** — PDF invoices + email, e-way bills, Kite Enterprise server + PWA
+3. **Done** — AI quick entry (BYOK, draft-only) on Solo and Enterprise
 4. **Done** — phone-only PWA with Google Drive backup (docs/google-drive.md)
 5. **Done** — e-invoicing (IRN + signed QR on invoices) via free direct IRP API
 6. **Done** — AI-first phases A–D (entry, documents, ask/insights, follow-up / close / anomalies)

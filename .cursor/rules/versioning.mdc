@@ -1,0 +1,33 @@
+---
+description: Versioned commit messages for Kite 2.0.x releases
+alwaysApply: true
+---
+
+# Commit versioning (Kite 2.0)
+
+Kite **2.0.0** is the AI-first baseline (tagged `v2.0.0`).
+
+## Commit message format
+
+Every commit on `main` after 2.0.0 must start with the next patch version:
+
+```
+v2.0.1: Short summary of why
+
+Optional body…
+```
+
+Then `v2.0.2`, `v2.0.3`, … (patch bumps only unless the user asks for a minor/major).
+
+## When shipping a versioned commit
+
+1. Read `VERSION` (e.g. `2.0.0`).
+2. Next commit uses `v2.0.1` in the message subject.
+3. After a successful commit, set `VERSION` to that patch (e.g. `2.0.1`) and include the `VERSION` file bump in the **same** commit when practical, or immediately after.
+4. Also bump `package.json`, `package-lock.json` (root), `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`, and `kite-server/Cargo.toml` to match when cutting a user-facing release; for tiny internal fixes, bumping `VERSION` + commit prefix is enough unless the user asks for a full release bump.
+5. Tag releases as `v2.0.1` (etc.) when the user asks for a GitHub Release.
+
+## Do not
+
+- Reset to `0.x` or reuse an already-shipped patch number.
+- Skip the `vX.Y.Z:` prefix on `main` commits after 2.0.0.

@@ -1,6 +1,6 @@
 [package]
 name = "kite-server"
-version = "0.1.0"
+version = "2.0.0"
 description = "Kite Team — multi-user HTTP server for Kite books (per-company SQLite)"
 authors = ["Kite contributors"]
 license = "MIT"

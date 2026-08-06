@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Forks](https://img.shields.io/github/forks/taksha17/kite?style=social)](https://github.com/taksha17/kite/fork)
 
-**Books that stay light.**
+**Books that stay light.** · **Version 2.0** (AI-first)
 
 Kite is an MIT-licensed, open-source accounting app for Indian small and mid-size
 businesses — and anyone else who wants simple, local, double-entry books.

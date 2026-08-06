@@ -65,6 +65,7 @@ company setup to GST invoice to Excel export.
 - **e-Invoicing (IRN):** register B2B invoices with the government IRP from the desktop app — IRN + signed QR printed on the invoice PDF, cancel-IRN support, free direct NIC API (no GSP fees), sandbox/production presets
 - **Bank statement import:** drop in a CSV/Excel statement (HDFC/SBI/ICICI/Axis/Kotak layouts auto-detected) — withdrawals become payments, deposits become receipts, counter-ledgers suggested from party names and your past choices, already-imported rows auto-skipped
 - **AI-first entry (free tier built in):** the AI prompt IS the new-voucher screen — describe a sale in English or Hinglish (or dictate it), **or snap a purchase bill** and a vision model drafts the voucher for review; unknown parties/items from the bill can be created in one click (GSTIN validated); a Cmd-K palette drafts/jumps from anywhere; first-run AI onboarding proposes your ledgers, items and GST setting. The AI can only draft, never post. Bring your own key — **OpenRouter's free models work out of the box (no card, 2-minute setup)** including vision via `openrouter/free`, plus OpenAI/Anthropic/Gemini; keys stay server-side on Team, in-app on Solo
+- **Ask my books:** type a question (or Ctrl+K) — the AI writes a read-only SQL query, Kite runs it on your company DB, and the answer + table use only those numbers
 - **Bank statement import:** CSV/Excel → payment & receipt vouchers, with learned rules, invoice matching, and AI ledger suggestions
 - Reports: Day Book, Ledger, Trial Balance, Profit & Loss, Balance Sheet
 - Balanced double-entry validation before save; posted vouchers can be edited in place (locked while an IRN/e-way bill is active)
@@ -162,7 +163,7 @@ docs/                  Getting started, deployment
 3. **Done** — AI quick entry (BYOK, draft-only) on Solo and Team
 4. **Done** — phone-only PWA with Google Drive backup (docs/google-drive.md)
 5. **Done** — e-invoicing (IRN + signed QR on invoices) via free direct IRP API
-6. **Next** — ask-my-books Q&A, home-screen insights
+6. **Next** — home-screen insights, receivables follow-up
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 

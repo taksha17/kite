@@ -170,6 +170,9 @@ export function HomePage() {
           <Link className="secondary btn" to="/vouchers/new?type=receipt">
             Receipt
           </Link>
+          <Link className="secondary btn" to="/ask">
+            Ask my books
+          </Link>
           <Link className="secondary btn" to="/reports">
             Trial balance
           </Link>

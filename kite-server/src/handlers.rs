@@ -175,9 +175,13 @@ pub async fn company_backup(
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AiChatInput {
     pub system: String,
     pub user: String,
+    /// Optional data:image/...;base64,... for bill capture / vision.
+    #[serde(default)]
+    pub image_data_url: Option<String>,
 }
 
 /// Forwards prompts to the company's LLM provider. Authenticated teammates
@@ -187,7 +191,11 @@ pub async fn company_ai_chat(
     auth: AuthUser,
     Json(input): Json<AiChatInput>,
 ) -> Result<Json<Value>, ApiError> {
-    crate::ai::validate_prompts(&input.system, &input.user)?;
+    crate::ai::validate_prompts(
+        &input.system,
+        &input.user,
+        input.image_data_url.as_deref(),
+    )?;
     let pool = state.company_pool(&auth.company_id).await?;
     let row = sqlx::query("SELECT value FROM meta WHERE key = 'ai_settings'")
         .fetch_optional(&pool)
@@ -201,7 +209,13 @@ pub async fn company_ai_chat(
                 "AI quick entry is not set up — the owner can add an API key under Companies → AI quick entry.",
             )
         })?;
-    let content = crate::ai::call_provider(&settings, &input.system, &input.user).await?;
+    let content = crate::ai::call_provider(
+        &settings,
+        &input.system,
+        &input.user,
+        input.image_data_url.as_deref(),
+    )
+    .await?;
     Ok(Json(json!({ "content": content })))
 }
 

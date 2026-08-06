@@ -232,7 +232,7 @@ export async function remoteUpdateGst(
 /** Team-mode AI quick entry — the server holds the API key. */
 export async function remoteAiChat(
   companyId: string,
-  input: { system: string; user: string },
+  input: { system: string; user: string; imageDataUrl?: string },
 ): Promise<string> {
   const data = await apiFetch("/api/company/ai/chat", {
     body: input,

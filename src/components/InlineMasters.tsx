@@ -24,15 +24,23 @@ import {
 export function InlinePartyForm({
   defaultKind,
   initial,
+  seed,
   onSaved,
   onCancel,
 }: {
   defaultKind: "debtor" | "creditor";
   initial?: LedgerRow;
+  /** Prefill for create mode (e.g. from bill capture). */
+  seed?: {
+    name?: string;
+    gstin?: string;
+    stateCode?: string;
+    address?: string;
+  };
   onSaved: (ledger: LedgerRow) => void | Promise<void>;
   onCancel: () => void;
 }) {
-  const [name, setName] = useState(initial?.name || "");
+  const [name, setName] = useState(initial?.name || seed?.name || "");
   const [kind, setKind] = useState<"debtor" | "creditor">(
     initial
       ? initial.group_name === "Sundry Creditors"
@@ -40,11 +48,15 @@ export function InlinePartyForm({
         : "debtor"
       : defaultKind,
   );
-  const [stateCode, setStateCode] = useState(initial?.state_code || "29");
-  const [gstin, setGstin] = useState(initial?.gstin || "");
+  const [stateCode, setStateCode] = useState(
+    initial?.state_code || seed?.stateCode || "29",
+  );
+  const [gstin, setGstin] = useState(initial?.gstin || seed?.gstin || "");
   const [email, setEmail] = useState(initial?.email || "");
   const [phone, setPhone] = useState(initial?.phone || "");
-  const [address, setAddress] = useState(initial?.address || "");
+  const [address, setAddress] = useState(
+    initial?.address || seed?.address || "",
+  );
   const [city, setCity] = useState(initial?.city || "");
   const [pin, setPin] = useState(initial?.pin || "");
   const [busy, setBusy] = useState(false);

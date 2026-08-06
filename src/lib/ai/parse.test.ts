@@ -147,6 +147,36 @@ describe("parseVoucherDraft", () => {
     expect(() => parseVoucherDraft("Sorry, I cannot help.", ctx)).toThrow(/not valid JSON/);
   });
 
+  it("seeds a new party when the bill names an unknown supplier", () => {
+    const raw = JSON.stringify({
+      voucherType: "purchase",
+      partyName: "Manu Bhikhari Traders",
+      partyGstin: "24ABCDE1234F1Z5",
+      placeOfSupply: "24",
+      totalInclTax: 1180,
+      gstRate: 18,
+    });
+    const { draft, seedParty, warnings } = parseVoucherDraft(raw, ctx);
+    expect(draft.partyId).toBeNull();
+    expect(seedParty).toMatchObject({
+      name: "Manu Bhikhari Traders",
+      gstin: "24ABCDE1234F1Z5",
+      stateCode: "24",
+    });
+    expect(warnings.some((w) => /Manu Bhikhari/i.test(w))).toBe(true);
+  });
+
+  it("matches a party by GSTIN from the bill", () => {
+    const raw = JSON.stringify({
+      voucherType: "purchase",
+      partyName: "Someone Else",
+      partyGstin: "29BBCDE4321G1Z3",
+    });
+    const { draft, seedParty } = parseVoucherDraft(raw, ctx);
+    expect(draft.partyId).toBe(5);
+    expect(seedParty).toBeUndefined();
+  });
+
   it("detects an empty draft", () => {
     const raw = JSON.stringify({ voucherType: null, partyId: null });
     const { draft } = parseVoucherDraft(raw, ctx);

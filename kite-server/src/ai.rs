@@ -1,6 +1,6 @@
 //! AI quick entry: forwards fully-built prompts to the company's configured
 //! LLM provider. The API key never leaves the server — the browser only sends
-//! {system, user} and receives the model's reply text.
+//! {system, user[, imageDataUrl]} and receives the model's reply text.
 
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -8,7 +8,8 @@ use serde_json::{json, Value};
 use crate::error::ApiError;
 
 const MAX_PROMPT_CHARS: usize = 16_000;
-const TIMEOUT_SECS: u64 = 45;
+const MAX_IMAGE_CHARS: usize = 2_500_000; // ~1.8MB binary as data URL
+const TIMEOUT_SECS: u64 = 60;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -24,7 +25,6 @@ pub fn default_model(provider: &str) -> Result<&'static str, ApiError> {
         "openai" => Ok("gpt-4o-mini"),
         "anthropic" => Ok("claude-haiku-4-5-20251001"),
         "gemini" => Ok("gemini-2.0-flash"),
-        // Auto-router across OpenRouter's no-cost models — resilient default.
         "openrouter" => Ok("openrouter/free"),
         other => Err(ApiError::bad_request(format!(
             "Unknown AI provider “{other}” — pick OpenRouter, OpenAI, Anthropic, or Gemini in company settings."
@@ -32,14 +32,34 @@ pub fn default_model(provider: &str) -> Result<&'static str, ApiError> {
     }
 }
 
-pub fn validate_prompts(system: &str, user: &str) -> Result<(), ApiError> {
+pub fn validate_prompts(system: &str, user: &str, image: Option<&str>) -> Result<(), ApiError> {
     if system.trim().is_empty() || user.trim().is_empty() {
         return Err(ApiError::bad_request("Empty prompt."));
     }
     if system.len() > MAX_PROMPT_CHARS || user.len() > MAX_PROMPT_CHARS {
         return Err(ApiError::bad_request("Prompt too long."));
     }
+    if let Some(img) = image {
+        if img.len() > MAX_IMAGE_CHARS {
+            return Err(ApiError::bad_request(
+                "Bill photo is too large after compression — try cropping to the bill.",
+            ));
+        }
+        if !img.starts_with("data:image/") {
+            return Err(ApiError::bad_request("Invalid bill image payload."));
+        }
+    }
     Ok(())
+}
+
+fn split_data_url(data_url: &str) -> Result<(String, String), ApiError> {
+    let rest = data_url
+        .strip_prefix("data:")
+        .ok_or_else(|| ApiError::bad_request("Invalid bill image payload."))?;
+    let (meta, b64) = rest
+        .split_once(";base64,")
+        .ok_or_else(|| ApiError::bad_request("Invalid bill image payload."))?;
+    Ok((meta.to_string(), b64.to_string()))
 }
 
 /// Calls the provider's chat endpoint and returns the reply text.
@@ -47,6 +67,7 @@ pub async fn call_provider(
     settings: &AiSettings,
     system: &str,
     user: &str,
+    image_data_url: Option<&str>,
 ) -> Result<String, ApiError> {
     let model = if settings.model.trim().is_empty() {
         default_model(&settings.provider)?.to_string()
@@ -58,80 +79,113 @@ pub async fn call_provider(
         .build()
         .map_err(|e| ApiError::internal(format!("Could not build HTTP client: {e}")))?;
 
+    let image = match image_data_url {
+        Some(url) => Some(split_data_url(url)?),
+        None => None,
+    };
+
     async fn send_once(
         client: &reqwest::Client,
         settings: &AiSettings,
         model: &str,
         system: &str,
         user: &str,
+        image: &Option<(String, String)>,
     ) -> Result<reqwest::Response, ApiError> {
         let response = match settings.provider.as_str() {
-        "openai" => {
-            client
-                .post("https://api.openai.com/v1/chat/completions")
-                .bearer_auth(settings.api_key.trim())
-                .json(&json!({
+            "openai" | "openrouter" => {
+                let user_content = if let Some((mime, b64)) = image {
+                    json!([
+                        { "type": "text", "text": user },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": format!("data:{mime};base64,{b64}")
+                            }
+                        }
+                    ])
+                } else {
+                    json!(user)
+                };
+                let mut req = client
+                    .post(if settings.provider == "openrouter" {
+                        "https://openrouter.ai/api/v1/chat/completions"
+                    } else {
+                        "https://api.openai.com/v1/chat/completions"
+                    })
+                    .bearer_auth(settings.api_key.trim());
+                if settings.provider == "openrouter" {
+                    req = req
+                        .header("HTTP-Referer", "https://github.com/taksha17/kite")
+                        .header("X-Title", "Kite Books");
+                }
+                req.json(&json!({
                     "model": model,
                     "temperature": 0,
                     "response_format": { "type": "json_object" },
                     "messages": [
                         { "role": "system", "content": system },
-                        { "role": "user", "content": user },
+                        { "role": "user", "content": user_content },
                     ],
                 }))
                 .send()
                 .await
-        }
-        "openrouter" => {
-            client
-                .post("https://openrouter.ai/api/v1/chat/completions")
-                .bearer_auth(settings.api_key.trim())
-                .header("HTTP-Referer", "https://github.com/taksha17/kite")
-                .header("X-Title", "Kite Books")
-                .json(&json!({
-                    "model": model,
-                    "temperature": 0,
-                    "response_format": { "type": "json_object" },
-                    "messages": [
-                        { "role": "system", "content": system },
-                        { "role": "user", "content": user },
-                    ],
-                }))
-                .send()
-                .await
-        }
-        "anthropic" => {
-            client
-                .post("https://api.anthropic.com/v1/messages")
-                .header("x-api-key", settings.api_key.trim())
-                .header("anthropic-version", "2023-06-01")
-                .json(&json!({
-                    "model": model,
-                    "max_tokens": 1024,
-                    "temperature": 0,
-                    "system": system,
-                    "messages": [ { "role": "user", "content": user } ],
-                }))
-                .send()
-                .await
-        }
-        "gemini" => client
-            .post(format!(
-                "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-            ))
-            .header("x-goog-api-key", settings.api_key.trim())
-            .json(&json!({
-                "systemInstruction": { "parts": [ { "text": system } ] },
-                "contents": [ { "role": "user", "parts": [ { "text": user } ] } ],
-                "generationConfig": { "temperature": 0, "responseMimeType": "application/json" },
-            }))
-            .send()
-            .await,
-        other => {
-            return Err(ApiError::bad_request(format!(
-                "Unknown AI provider “{other}”."
-            )))
-        }
+            }
+            "anthropic" => {
+                let user_content = if let Some((mime, b64)) = image {
+                    json!([
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": mime,
+                                "data": b64
+                            }
+                        },
+                        { "type": "text", "text": user }
+                    ])
+                } else {
+                    json!(user)
+                };
+                client
+                    .post("https://api.anthropic.com/v1/messages")
+                    .header("x-api-key", settings.api_key.trim())
+                    .header("anthropic-version", "2023-06-01")
+                    .json(&json!({
+                        "model": model,
+                        "max_tokens": 2048,
+                        "temperature": 0,
+                        "system": system,
+                        "messages": [ { "role": "user", "content": user_content } ],
+                    }))
+                    .send()
+                    .await
+            }
+            "gemini" => {
+                let mut parts = vec![json!({ "text": user })];
+                if let Some((mime, b64)) = image {
+                    parts.push(json!({
+                        "inline_data": { "mime_type": mime, "data": b64 }
+                    }));
+                }
+                client
+                    .post(format!(
+                        "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+                    ))
+                    .header("x-goog-api-key", settings.api_key.trim())
+                    .json(&json!({
+                        "systemInstruction": { "parts": [ { "text": system } ] },
+                        "contents": [ { "role": "user", "parts": parts } ],
+                        "generationConfig": { "temperature": 0, "responseMimeType": "application/json" },
+                    }))
+                    .send()
+                    .await
+            }
+            other => {
+                return Err(ApiError::bad_request(format!(
+                    "Unknown AI provider “{other}”."
+                )))
+            }
         }
         .map_err(|e| {
             ApiError::internal(format!(
@@ -141,12 +195,10 @@ pub async fn call_provider(
         Ok(response)
     }
 
-    // Free tiers (esp. OpenRouter) throttle often — one automatic retry
-    // smooths a transient 429 without any user action.
-    let mut response = send_once(&client, settings, &model, system, user).await?;
+    let mut response = send_once(&client, settings, &model, system, user, &image).await?;
     if response.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
-        tokio::time::sleep(std::time::Duration::from_secs(4)).await;
-        response = send_once(&client, settings, &model, system, user).await?;
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+        response = send_once(&client, settings, &model, system, user, &image).await?;
     }
 
     let status = response.status();

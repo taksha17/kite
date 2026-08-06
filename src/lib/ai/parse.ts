@@ -19,6 +19,8 @@ export interface ParsedDraft {
   draft: VoucherDraft;
   /** Human-readable notes about fields that had to be dropped or fixed. */
   warnings: string[];
+  /** When the AI named a party that isn't in the books — UI can offer create. */
+  seedParty?: { name: string; gstin?: string; stateCode?: string };
 }
 
 function asString(value: unknown): string | null {
@@ -129,13 +131,8 @@ function resolveParty(
   obj: Record<string, unknown>,
   ctx: DraftContext,
   warnings: string[],
-): number | null {
+): { partyId: number | null; seedParty?: ParsedDraft["seedParty"] } {
   const partyId = firstNumber(obj.partyId, obj.party_id, obj.ledgerId);
-  if (partyId != null) {
-    const party = ctx.parties.find((p) => p.id === partyId);
-    if (party) return party.id;
-    warnings.push("The AI picked a party id that is not in your ledgers.");
-  }
   const name = firstString(
     obj.partyName,
     obj.party_name,
@@ -144,17 +141,47 @@ function resolveParty(
       ? (obj.party as { name?: unknown }).name
       : null,
   );
+  const gstin = firstString(obj.partyGstin, obj.party_gstin, obj.gstin);
+  const stateCode = firstString(
+    obj.placeOfSupply,
+    obj.partyState,
+    obj.party_state,
+  );
+
+  if (partyId != null) {
+    const party = ctx.parties.find((p) => p.id === partyId);
+    if (party) return { partyId: party.id };
+    warnings.push("The AI picked a party id that is not in your ledgers.");
+  }
+
+  // Prefer GSTIN exact match when the bill printed one.
+  if (gstin) {
+    const byGstin = ctx.parties.find(
+      (p) => p.gstin && p.gstin.toUpperCase() === gstin.toUpperCase(),
+    );
+    if (byGstin) return { partyId: byGstin.id };
+  }
+
   if (name) {
     const match = fuzzyMatchByName(name, ctx.parties);
     if (match) {
       if (partyId != null) warnings.push(`Matched party by name to “${match.name}”.`);
-      return match.id;
+      return { partyId: match.id };
     }
     warnings.push(
       `No party matching “${name}” — create or pick one in the form.`,
     );
+    return {
+      partyId: null,
+      seedParty: {
+        name,
+        gstin: gstin || undefined,
+        stateCode:
+          stateCode && stateCode.length === 2 ? stateCode : undefined,
+      },
+    };
   }
-  return null;
+  return { partyId: null };
 }
 
 function resolveItem(
@@ -252,7 +279,8 @@ export function parseVoucherDraft(raw: string, ctx: DraftContext): ParsedDraft {
     warnings.push(`Ignored an unparseable date (“${date}”).`);
   }
 
-  draft.partyId = resolveParty(obj, ctx, warnings);
+  const partyResolved = resolveParty(obj, ctx, warnings);
+  draft.partyId = partyResolved.partyId;
 
   const pos = firstString(obj.placeOfSupply, obj.place_of_supply, obj.stateCode);
   if (pos && INDIA_STATES.some((s) => s.code === pos)) {
@@ -366,7 +394,7 @@ export function parseVoucherDraft(raw: string, ctx: DraftContext): ParsedDraft {
     }
   }
 
-  return { draft, warnings };
+  return { draft, warnings, seedParty: partyResolved.seedParty };
 }
 
 /** True when the draft contains nothing usable at all. */

@@ -35,8 +35,9 @@ import {
   type GodownRow,
   type StockItemRow,
 } from "../lib/db/inventory";
-import { draftVoucher } from "../lib/ai/client";
+import { draftVoucher, draftVoucherFromBill } from "../lib/ai/client";
 import { AI_EXAMPLE_SENTENCES } from "../lib/ai/examples";
+import { fileToBillDataUrl } from "../lib/ai/image";
 import { useSpeechInput } from "../lib/ai/useSpeech";
 import { aiConfigured, getAiSettings } from "../lib/db/ai";
 import type { ParsedDraft } from "../lib/ai/parse";
@@ -143,7 +144,14 @@ export function VoucherEditorPage() {
   const [aiWaitSecs, setAiWaitSecs] = useState(0);
   const [aiWarnings, setAiWarnings] = useState<string[]>([]);
   const [aiApplied, setAiApplied] = useState(false);
+  const [partySeed, setPartySeed] = useState<{
+    name?: string;
+    gstin?: string;
+    stateCode?: string;
+  } | null>(null);
+  const [billPreview, setBillPreview] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const billInputRef = useRef<HTMLInputElement>(null);
   const autoDrafted = useRef(false);
   const speech = useSpeechInput((t) => setAiSentence(t));
 
@@ -407,6 +415,47 @@ export function VoucherEditorPage() {
     }
   }
 
+  async function buildDraftContext() {
+    return {
+      today: date,
+      companyStateCode: company?.state_code || "29",
+      gstEnabled,
+      parties: ledgers
+        .filter(
+          (l) =>
+            l.is_party ||
+            l.group_name === "Sundry Debtors" ||
+            l.group_name === "Sundry Creditors",
+        )
+        .map((l) => ({ id: l.id, name: l.name, gstin: l.gstin })),
+      items: stockItems.map((i) => ({
+        id: i.id,
+        name: i.name,
+        salesRate: i.sales_rate,
+        purchaseRate: i.purchase_rate,
+        gstRate: i.gst_rate,
+        hsn: i.hsn_sac,
+      })),
+    };
+  }
+
+  function handleParsedDraft(parsed: ParsedDraft) {
+    applyAiDraft(parsed);
+    setAiWarnings(parsed.warnings);
+    setAiApplied(true);
+    if (parsed.seedParty) {
+      setPartySeed(parsed.seedParty);
+      const t = parsed.draft.voucherType ?? voucherType;
+      if (gstEnabled && (t === "purchase" || t === "sales")) {
+        setPartyForm("new");
+      } else {
+        setPlainPartyForm(true);
+      }
+    } else {
+      setPartySeed(null);
+    }
+  }
+
   async function onAiDraft() {
     if (!aiSentence.trim()) return;
     setAiBusy(true);
@@ -414,34 +463,37 @@ export function VoucherEditorPage() {
     setAiWarnings([]);
     setAiApplied(false);
     try {
-      const parsed = await draftVoucher(aiSentence.trim(), {
-        today: date,
-        companyStateCode: company?.state_code || "29",
-        gstEnabled,
-        parties: ledgers
-          .filter(
-            (l) =>
-              l.is_party ||
-              l.group_name === "Sundry Debtors" ||
-              l.group_name === "Sundry Creditors",
-          )
-          .map((l) => ({ id: l.id, name: l.name, gstin: l.gstin })),
-        items: stockItems.map((i) => ({
-          id: i.id,
-          name: i.name,
-          salesRate: i.sales_rate,
-          purchaseRate: i.purchase_rate,
-          gstRate: i.gst_rate,
-          hsn: i.hsn_sac,
-        })),
-      });
-      applyAiDraft(parsed);
-      setAiWarnings(parsed.warnings);
-      setAiApplied(true);
+      const parsed = await draftVoucher(
+        aiSentence.trim(),
+        await buildDraftContext(),
+      );
+      handleParsedDraft(parsed);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setAiBusy(false);
+    }
+  }
+
+  async function onBillCapture(file: File) {
+    setAiBusy(true);
+    setError(null);
+    setAiWarnings([]);
+    setAiApplied(false);
+    setPartySeed(null);
+    try {
+      const dataUrl = await fileToBillDataUrl(file);
+      setBillPreview(dataUrl);
+      const parsed = await draftVoucherFromBill(
+        dataUrl,
+        await buildDraftContext(),
+      );
+      handleParsedDraft(parsed);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setAiBusy(false);
+      if (billInputRef.current) billInputRef.current.value = "";
     }
   }
 
@@ -644,8 +696,8 @@ export function VoucherEditorPage() {
         <section className="panel ai-hero" style={{ marginBottom: "1rem" }}>
           <h2 style={{ marginTop: 0 }}>Tell Kite what happened</h2>
           <p className="muted small">
-            One sentence in English or Hinglish. The AI drafts the voucher into
-            the form below — nothing posts until you press Accept voucher.
+            Type a sentence, dictate, or snap a purchase bill — the AI drafts
+            the voucher for review. Nothing posts until you Accept.
           </p>
           <textarea
             rows={2}
@@ -653,6 +705,7 @@ export function VoucherEditorPage() {
             value={aiSentence}
             onChange={(e) => setAiSentence(e.target.value)}
             placeholder="Sold 2 Wireless Mouse to Agarwal @799 on UPI"
+            disabled={aiBusy}
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
@@ -666,17 +719,39 @@ export function VoucherEditorPage() {
                 key={ex}
                 type="button"
                 className="chip"
+                disabled={aiBusy}
                 onClick={() => setAiSentence(ex)}
               >
                 {ex}
               </button>
             ))}
           </div>
+          <input
+            ref={billInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void onBillCapture(f);
+            }}
+          />
           <div className="cta-row">
+            <button
+              type="button"
+              className="secondary"
+              disabled={aiBusy}
+              onClick={() => billInputRef.current?.click()}
+              title="Take a photo or upload a purchase bill"
+            >
+              Scan bill
+            </button>
             {speech.supported && (
               <button
                 type="button"
                 className={speech.listening ? "secondary" : "ghost"}
+                disabled={aiBusy}
                 onClick={speech.toggle}
                 title="Dictate in English or Hinglish"
               >
@@ -695,10 +770,42 @@ export function VoucherEditorPage() {
             </button>
             <span className="muted small">
               {aiBusy
-                ? "Free models can take 15–40s — the window stays usable"
+                ? billPreview
+                  ? "Reading the bill — free vision models often take 20–60s"
+                  : "Free models can take 15–40s — the window stays usable"
                 : "or fill the form manually below"}
             </span>
           </div>
+          {billPreview && (
+            <div
+              style={{
+                marginTop: "0.75rem",
+                display: "flex",
+                gap: "0.75rem",
+                alignItems: "flex-start",
+              }}
+            >
+              <img
+                src={billPreview}
+                alt="Bill preview"
+                style={{
+                  width: 96,
+                  height: 96,
+                  objectFit: "cover",
+                  borderRadius: 8,
+                  border: "1px solid var(--line)",
+                }}
+              />
+              <button
+                type="button"
+                className="ghost"
+                disabled={aiBusy}
+                onClick={() => setBillPreview(null)}
+              >
+                Clear photo
+              </button>
+            </div>
+          )}
           {aiApplied && (
             <p className="notice">
               Draft applied — review the form and Accept voucher when it looks
@@ -845,12 +952,17 @@ export function VoucherEditorPage() {
                     ? ledgers.find((l) => l.id === Number(partyId))
                     : undefined
                 }
+                seed={partyForm === "new" ? partySeed || undefined : undefined}
                 onSaved={async (ledger) => {
                   setLedgers(await listLedgers());
                   setPartyId(ledger.id);
                   setPartyForm("closed");
+                  setPartySeed(null);
                 }}
-                onCancel={() => setPartyForm("closed")}
+                onCancel={() => {
+                  setPartyForm("closed");
+                  setPartySeed(null);
+                }}
               />
             )}
             <div className="form-row">
@@ -1469,10 +1581,14 @@ export function VoucherEditorPage() {
             {plainPartyForm && (
               <InlinePartyForm
                 defaultKind={
-                  voucherType === "payment" ? "creditor" : "debtor"
+                  voucherType === "payment" || voucherType === "purchase"
+                    ? "creditor"
+                    : "debtor"
                 }
+                seed={partySeed || undefined}
                 onSaved={async (ledger) => {
                   setLedgers(await listLedgers());
+                  setPartyId(ledger.id);
                   setLines((prev) => {
                     const idx = prev.findIndex((l) => !l.ledgerId);
                     if (idx === -1) {
@@ -1486,8 +1602,12 @@ export function VoucherEditorPage() {
                     );
                   });
                   setPlainPartyForm(false);
+                  setPartySeed(null);
                 }}
-                onCancel={() => setPlainPartyForm(false)}
+                onCancel={() => {
+                  setPlainPartyForm(false);
+                  setPartySeed(null);
+                }}
               />
             )}
           </div>

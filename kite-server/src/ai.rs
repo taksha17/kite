@@ -24,8 +24,10 @@ pub fn default_model(provider: &str) -> Result<&'static str, ApiError> {
         "openai" => Ok("gpt-4o-mini"),
         "anthropic" => Ok("claude-haiku-4-5-20251001"),
         "gemini" => Ok("gemini-2.0-flash"),
+        // Auto-router across OpenRouter's no-cost models — resilient default.
+        "openrouter" => Ok("openrouter/free"),
         other => Err(ApiError::bad_request(format!(
-            "Unknown AI provider “{other}” — pick OpenAI, Anthropic, or Gemini in company settings."
+            "Unknown AI provider “{other}” — pick OpenRouter, OpenAI, Anthropic, or Gemini in company settings."
         ))),
     }
 }
@@ -56,11 +58,36 @@ pub async fn call_provider(
         .build()
         .map_err(|e| ApiError::internal(format!("Could not build HTTP client: {e}")))?;
 
-    let response = match settings.provider.as_str() {
+    async fn send_once(
+        client: &reqwest::Client,
+        settings: &AiSettings,
+        model: &str,
+        system: &str,
+        user: &str,
+    ) -> Result<reqwest::Response, ApiError> {
+        let response = match settings.provider.as_str() {
         "openai" => {
             client
                 .post("https://api.openai.com/v1/chat/completions")
                 .bearer_auth(settings.api_key.trim())
+                .json(&json!({
+                    "model": model,
+                    "temperature": 0,
+                    "response_format": { "type": "json_object" },
+                    "messages": [
+                        { "role": "system", "content": system },
+                        { "role": "user", "content": user },
+                    ],
+                }))
+                .send()
+                .await
+        }
+        "openrouter" => {
+            client
+                .post("https://openrouter.ai/api/v1/chat/completions")
+                .bearer_auth(settings.api_key.trim())
+                .header("HTTP-Referer", "https://github.com/taksha17/kite")
+                .header("X-Title", "Kite Books")
                 .json(&json!({
                     "model": model,
                     "temperature": 0,
@@ -105,12 +132,22 @@ pub async fn call_provider(
                 "Unknown AI provider “{other}”."
             )))
         }
+        }
+        .map_err(|e| {
+            ApiError::internal(format!(
+                "Could not reach the AI provider. Check the server's internet connection: {e}"
+            ))
+        })?;
+        Ok(response)
     }
-    .map_err(|e| {
-        ApiError::internal(format!(
-            "Could not reach the AI provider. Check the server's internet connection: {e}"
-        ))
-    })?;
+
+    // Free tiers (esp. OpenRouter) throttle often — one automatic retry
+    // smooths a transient 429 without any user action.
+    let mut response = send_once(&client, settings, &model, system, user).await?;
+    if response.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
+        tokio::time::sleep(std::time::Duration::from_secs(4)).await;
+        response = send_once(&client, settings, &model, system, user).await?;
+    }
 
     let status = response.status();
     let body: Value = response
@@ -128,14 +165,14 @@ pub async fn call_provider(
                 "The AI provider rejected the API key ({detail}). Update it under Companies → AI quick entry."
             )),
             429 => ApiError::internal(
-                "The AI provider rate-limited the request. Wait a moment and retry.",
+                "The AI provider rate-limited the request — wait a minute and retry. On OpenRouter's free tier this is the 20/min or 50/day cap (a one-time $10 top-up raises it to 1000/day).",
             ),
             s => ApiError::internal(format!("AI provider error (HTTP {s}): {detail}")),
         });
     }
 
     let text = match settings.provider.as_str() {
-        "openai" => body
+        "openai" | "openrouter" => body
             .pointer("/choices/0/message/content")
             .and_then(Value::as_str),
         "anthropic" => body.pointer("/content/0/text").and_then(Value::as_str),

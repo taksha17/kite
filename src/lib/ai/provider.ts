@@ -54,16 +54,43 @@ export async function soloProviderChat(
       contents: [{ role: "user", parts: [{ text: user }] }],
       generationConfig: { temperature: 0, responseMimeType: "application/json" },
     };
+  } else if (provider === "openrouter") {
+    url = "https://openrouter.ai/api/v1/chat/completions";
+    headers = {
+      Authorization: `Bearer ${key}`,
+      "HTTP-Referer": "https://github.com/taksha17/kite",
+      "X-Title": "Kite Books",
+    };
+    payload = {
+      model,
+      temperature: 0,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    };
   } else {
     throw new Error("Unknown AI provider.");
   }
 
-  const res = await httpRequest({
+  // Free tiers (esp. OpenRouter) throttle often — one automatic retry
+  // smooths a transient 429 without any user action.
+  let res = await httpRequest({
     method: "POST",
     url,
     headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(payload),
   });
+  if (res.status === 429) {
+    await new Promise((r) => setTimeout(r, 4000));
+    res = await httpRequest({
+      method: "POST",
+      url,
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify(payload),
+    });
+  }
 
   let body: unknown = null;
   try {
@@ -80,13 +107,17 @@ export async function soloProviderChat(
       throw new Error(`The AI provider rejected the API key (${detail}).`);
     }
     if (res.status === 429) {
-      throw new Error("The AI provider rate-limited the request — wait a moment and retry.");
+      throw new Error(
+        provider === "openrouter"
+          ? "OpenRouter's free limit is hit — wait a minute and retry. Free accounts get 20 requests/min and 50/day (a one-time $10 top-up raises it to 1000/day)."
+          : "The AI provider rate-limited the request — wait a moment and retry.",
+      );
     }
     throw new Error(`AI provider error: ${detail}`);
   }
 
   const text =
-    provider === "openai"
+    provider === "openai" || provider === "openrouter"
       ? (body as { choices?: { message?: { content?: string } }[] } | null)
           ?.choices?.[0]?.message?.content
       : provider === "anthropic"

@@ -194,8 +194,8 @@ export function AiOnboardingWizard({ onClose }: { onClose: () => void }) {
           </div>
           {aiReady === false && (
             <p className="warn-text small">
-              AI quick entry isn't configured yet — add an API key under
-              Companies first.
+              AI quick entry isn't configured yet — add a key under Companies
+              first. A free OpenRouter key takes 2 minutes and needs no card.
             </p>
           )}
           <button

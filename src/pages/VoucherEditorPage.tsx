@@ -683,7 +683,8 @@ export function VoucherEditorPage() {
         <p className="muted small" style={{ marginTop: 0 }}>
           Tip: set up AI quick entry under{" "}
           <Link to="/companies">Companies</Link> to draft vouchers from a
-          sentence — or fill the form manually below.
+          sentence — a free OpenRouter key works, no card needed. Or fill the
+          form manually below.
         </p>
       )}
 

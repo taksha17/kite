@@ -36,7 +36,7 @@ import {
 import type { IrpCredentials } from "../lib/einvoice/types";
 import { testIrpAuth } from "../lib/einvoice/client";
 import { testAiConnection } from "../lib/ai/client";
-import { AI_DEFAULT_MODELS, type AiProvider, type AiSettings } from "../lib/ai/types";
+import { AI_DEFAULT_MODELS, AI_MODEL_SUGGESTIONS, type AiProvider, type AiSettings } from "../lib/ai/types";
 import { aiConfigured, emptyAiSettings, getAiSettings, saveAiSettings } from "../lib/db/ai";
 import { useApp } from "../state/AppContext";
 
@@ -1085,6 +1085,7 @@ export function CompaniesPage() {
                   }
                 >
                   <option value="">Off</option>
+                  <option value="openrouter">OpenRouter — free models (recommended)</option>
                   <option value="openai">OpenAI</option>
                   <option value="anthropic">Anthropic (Claude)</option>
                   <option value="gemini">Google (Gemini)</option>
@@ -1102,9 +1103,58 @@ export function CompaniesPage() {
                       ? AI_DEFAULT_MODELS[ai.provider]
                       : "Provider default"
                   }
+                  list="ai-model-suggestions"
                 />
+                {ai.provider && (
+                  <datalist id="ai-model-suggestions">
+                    {AI_MODEL_SUGGESTIONS[ai.provider].map((m) => (
+                      <option key={m} value={m} />
+                    ))}
+                  </datalist>
+                )}
               </label>
             </div>
+            {ai.provider === "openrouter" && (
+              <div
+                className="muted small"
+                style={{
+                  border: "1px solid var(--line)",
+                  borderRadius: 8,
+                  padding: "0.6rem 0.75rem",
+                  marginBottom: "0.75rem",
+                }}
+              >
+                <strong>Free setup (2 minutes, no card):</strong>
+                <ol style={{ margin: "0.35rem 0 0.35rem 1.1rem", padding: 0 }}>
+                  <li>
+                    Open{" "}
+                    <a
+                      href="https://openrouter.ai/keys"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      openrouter.ai/keys
+                    </a>{" "}
+                    and sign in (a Google account works).
+                  </li>
+                  <li>Click “Create Key”, copy it, paste it below, Save.</li>
+                  <li>
+                    Leave Model empty to use the free auto-router — it picks a
+                    working free model for you.
+                  </li>
+                </ol>
+                Free limits: 20 requests/min and 50/day — plenty for voucher
+                drafting. A one-time $10 top-up raises it to 1000/day. Current
+                free models:{" "}
+                <a
+                  href="https://openrouter.ai/collections/free-models"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  openrouter.ai/collections/free-models
+                </a>
+              </div>
+            )}
             <label>
               API key
               <input

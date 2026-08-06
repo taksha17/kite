@@ -1,4 +1,4 @@
-export type AiProvider = "openai" | "anthropic" | "gemini";
+export type AiProvider = "openai" | "anthropic" | "gemini" | "openrouter";
 
 export interface AiSettings {
   provider: AiProvider | "";
@@ -11,6 +11,24 @@ export const AI_DEFAULT_MODELS: Record<AiProvider, string> = {
   openai: "gpt-4o-mini",
   anthropic: "claude-haiku-4-5-20251001",
   gemini: "gemini-2.0-flash",
+  // openrouter/free is an auto-router across all no-cost models — the most
+  // resilient default since the free roster rotates.
+  openrouter: "openrouter/free",
+};
+
+/** Suggested models per provider, shown as autofill hints in settings. */
+export const AI_MODEL_SUGGESTIONS: Record<AiProvider, string[]> = {
+  openai: ["gpt-4o-mini", "gpt-4o"],
+  anthropic: ["claude-haiku-4-5-20251001", "claude-sonnet-4-5"],
+  gemini: ["gemini-2.0-flash", "gemini-2.5-flash"],
+  openrouter: [
+    "openrouter/free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "deepseek/deepseek-r1:free",
+    "google/gemini-2.0-flash-exp:free",
+    "google/gemma-3-27b-it:free",
+    "qwen/qwen3-coder:free",
+  ],
 };
 
 export interface DraftStockLine {

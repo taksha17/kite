@@ -247,18 +247,22 @@ export async function fetchSalesInvoice(
         state_code: string | null;
         email: string | null;
         address: string | null;
+        city: string | null;
+        pin: string | null;
       }[]
     >(
-      "SELECT name, gstin, state_code, email, address FROM ledger WHERE id = $1",
+      "SELECT name, gstin, state_code, email, address, city, pin FROM ledger WHERE id = $1",
       [v.party_ledger_id],
     );
     if (parties[0]) {
+      const p = parties[0];
+      const cityPin = [p.city, p.pin].filter(Boolean).join(" - ");
       party = {
-        name: parties[0].name,
-        gstin: parties[0].gstin || "",
-        stateCode: parties[0].state_code || "",
-        email: parties[0].email || "",
-        address: parties[0].address || "",
+        name: p.name,
+        gstin: p.gstin || "",
+        stateCode: p.state_code || "",
+        email: p.email || "",
+        address: [p.address, cityPin].filter(Boolean).join(", "),
       };
     }
   }

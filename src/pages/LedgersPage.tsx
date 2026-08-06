@@ -27,7 +27,10 @@ export function LedgersPage() {
   const [partyKind, setPartyKind] = useState<"debtor" | "creditor">("debtor");
   const [partyGstin, setPartyGstin] = useState("");
   const [partyEmail, setPartyEmail] = useState("");
+  const [partyPhone, setPartyPhone] = useState("");
   const [partyAddress, setPartyAddress] = useState("");
+  const [partyCity, setPartyCity] = useState("");
+  const [partyPin, setPartyPin] = useState("");
   const [partyState, setPartyState] = useState(company?.state_code || "29");
 
   async function refresh() {
@@ -82,12 +85,18 @@ export function LedgersPage() {
         gstin: partyGstin || undefined,
         stateCode: partyState || undefined,
         email: partyEmail || undefined,
+        phone: partyPhone || undefined,
         address: partyAddress || undefined,
+        city: partyCity || undefined,
+        pin: partyPin || undefined,
       });
       setPartyName("");
       setPartyGstin("");
       setPartyEmail("");
+      setPartyPhone("");
       setPartyAddress("");
+      setPartyCity("");
+      setPartyPin("");
       setTab("list");
       await refresh();
     } catch (err) {
@@ -236,22 +245,51 @@ export function LedgersPage() {
             </label>
             <label>
               Address (Bill To on invoices)
-              <textarea
+              <input
                 value={partyAddress}
                 onChange={(e) => setPartyAddress(e.target.value)}
-                rows={2}
-                placeholder="Street, city, PIN"
+                placeholder="Street / area"
               />
             </label>
-            <label>
-              Email (for invoicing)
-              <input
-                type="email"
-                value={partyEmail}
-                onChange={(e) => setPartyEmail(e.target.value)}
-                placeholder="party@example.com"
-              />
-            </label>
+            <div className="form-row">
+              <label>
+                City
+                <input
+                  value={partyCity}
+                  onChange={(e) => setPartyCity(e.target.value)}
+                />
+              </label>
+              <label>
+                PIN code
+                <input
+                  value={partyPin}
+                  onChange={(e) => setPartyPin(e.target.value)}
+                  maxLength={6}
+                  inputMode="numeric"
+                  placeholder="560001"
+                />
+              </label>
+            </div>
+            <div className="form-row">
+              <label>
+                Mobile no.
+                <input
+                  type="tel"
+                  value={partyPhone}
+                  onChange={(e) => setPartyPhone(e.target.value)}
+                  placeholder="98XXXXXXXX"
+                />
+              </label>
+              <label>
+                Email (for invoicing)
+                <input
+                  type="email"
+                  value={partyEmail}
+                  onChange={(e) => setPartyEmail(e.target.value)}
+                  placeholder="party@example.com"
+                />
+              </label>
+            </div>
             <div className="cta-row">
               <button className="primary" type="submit">
                 Save party

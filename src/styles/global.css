@@ -114,6 +114,14 @@ button.ghost:hover:not(:disabled), .btn.ghost:hover { color: var(--accent-deep);
   flex-shrink: 0;
 }
 
+.brand-logo {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.8rem;
+  box-shadow: 0 8px 20px rgba(15, 122, 138, 0.28);
+  flex-shrink: 0;
+}
+
 .brand-name {
   margin: 0;
   font-family: var(--font-display);

@@ -43,6 +43,10 @@ export function InlinePartyForm({
   const [stateCode, setStateCode] = useState(initial?.state_code || "29");
   const [gstin, setGstin] = useState(initial?.gstin || "");
   const [email, setEmail] = useState(initial?.email || "");
+  const [phone, setPhone] = useState(initial?.phone || "");
+  const [address, setAddress] = useState(initial?.address || "");
+  const [city, setCity] = useState(initial?.city || "");
+  const [pin, setPin] = useState(initial?.pin || "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,12 +55,13 @@ export function InlinePartyForm({
     setBusy(true);
     setError(null);
     try {
+      const fields = { name, gstin, stateCode, email, phone, address, city, pin };
       if (initial) {
         // Group (debtor/creditor) is fixed on edit — moving groups would
         // need to reclassify history; kind selector is hidden then.
-        await updateLedger(initial.id, { name, gstin, stateCode, email });
+        await updateLedger(initial.id, fields);
       } else {
-        await createParty({ name, kind, gstin, stateCode, email });
+        await createParty({ ...fields, kind });
       }
       const row = await findLedgerByName(name.trim());
       if (!row) throw new Error("Saved, but could not reload the party.");
@@ -125,6 +130,42 @@ export function InlinePartyForm({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+            />
+          </label>
+          <label>
+            Mobile no. (optional)
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="98XXXXXXXX"
+            />
+          </label>
+        </div>
+        <div className="form-row">
+          <label>
+            Address (optional)
+            <input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Street / area"
+            />
+          </label>
+          <label>
+            City (optional)
+            <input
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+            />
+          </label>
+          <label>
+            PIN code (optional)
+            <input
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              maxLength={6}
+              inputMode="numeric"
+              placeholder="560001"
             />
           </label>
         </div>

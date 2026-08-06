@@ -428,11 +428,14 @@ export async function createLedger(input: {
   stateCode?: string;
   email?: string;
   address?: string;
+  city?: string;
+  pin?: string;
+  phone?: string;
 }): Promise<void> {
   const db = getActiveCompanyDb();
   await db.execute(
-    `INSERT INTO ledger (name, group_id, opening_debit, opening_credit, is_party, is_cash_bank, gstin, state_code, email, address)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+    `INSERT INTO ledger (name, group_id, opening_debit, opening_credit, is_party, is_cash_bank, gstin, state_code, email, address, city, pin, phone)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
     [
       input.name.trim(),
       input.groupId,
@@ -444,6 +447,9 @@ export async function createLedger(input: {
       input.stateCode || null,
       input.email?.trim() || null,
       input.address?.trim() || null,
+      input.city?.trim() || null,
+      input.pin?.trim() || null,
+      input.phone?.trim() || null,
     ],
   );
 }
@@ -455,6 +461,9 @@ export async function createParty(input: {
   stateCode?: string;
   email?: string;
   address?: string;
+  city?: string;
+  pin?: string;
+  phone?: string;
 }): Promise<void> {
   const db = getActiveCompanyDb();
   const groupName =
@@ -472,6 +481,9 @@ export async function createParty(input: {
     stateCode: input.stateCode,
     email: input.email,
     address: input.address,
+    city: input.city,
+    pin: input.pin,
+    phone: input.phone,
   });
 }
 
@@ -495,18 +507,25 @@ export async function updateLedger(
     stateCode?: string;
     email?: string;
     address?: string;
+    city?: string;
+    pin?: string;
+    phone?: string;
   },
 ): Promise<void> {
   const db = getActiveCompanyDb();
   await db.execute(
-    `UPDATE ledger SET name = $1, gstin = $2, state_code = $3, email = $4, address = $5
-     WHERE id = $6`,
+    `UPDATE ledger SET name = $1, gstin = $2, state_code = $3, email = $4, address = $5,
+       city = $6, pin = $7, phone = $8
+     WHERE id = $9`,
     [
       input.name.trim(),
       input.gstin?.trim() || null,
       input.stateCode || null,
       input.email?.trim() || null,
       input.address?.trim() || null,
+      input.city?.trim() || null,
+      input.pin?.trim() || null,
+      input.phone?.trim() || null,
       ledgerId,
     ],
   );

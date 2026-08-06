@@ -33,6 +33,9 @@ export interface LedgerRow {
   state_code: string | null;
   email: string | null;
   address: string | null;
+  city: string | null;
+  pin: string | null;
+  phone: string | null;
   notes: string | null;
 }
 

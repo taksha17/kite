@@ -24,6 +24,9 @@ export const COMPANY_SCHEMA_STATEMENTS = [
     state_code TEXT,
     email TEXT,
     address TEXT,
+    city TEXT,
+    pin TEXT,
+    phone TEXT,
     notes TEXT
   )`,
   `CREATE TABLE IF NOT EXISTS voucher_type (
@@ -180,6 +183,9 @@ export const COMPANY_COLUMN_MIGRATIONS: { table: string; column: string; ddl: st
   },
   { table: "ledger", column: "email", ddl: "ALTER TABLE ledger ADD COLUMN email TEXT" },
   { table: "ledger", column: "address", ddl: "ALTER TABLE ledger ADD COLUMN address TEXT" },
+  { table: "ledger", column: "city", ddl: "ALTER TABLE ledger ADD COLUMN city TEXT" },
+  { table: "ledger", column: "pin", ddl: "ALTER TABLE ledger ADD COLUMN pin TEXT" },
+  { table: "ledger", column: "phone", ddl: "ALTER TABLE ledger ADD COLUMN phone TEXT" },
   {
     table: "voucher",
     column: "payment_mode",

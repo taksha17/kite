@@ -22,7 +22,7 @@ export function Layout() {
     <div className="shell">
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-mark" aria-hidden />
+          <img src="/kite.svg" alt="" className="brand-logo" />
           <div>
             <p className="brand-name">Kite</p>
             <p className="brand-tag">Books that stay light</p>

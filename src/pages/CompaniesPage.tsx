@@ -2,8 +2,13 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { indianFyStartFor } from "../lib/accounting/engine";
 import { INDIA_STATES } from "../lib/accounting/gst";
-import { backupCompany } from "../lib/db/backup";
-import { isTauriRuntime, remoteDownloadBackup } from "../lib/server/remote";
+import { backupCompany, browserDownloadBackup } from "../lib/db/backup";
+import {
+  isBrowserMode,
+  isTauriRuntime,
+  remoteDownloadBackup,
+} from "../lib/server/remote";
+import { DriveBackupPanel } from "../components/DriveBackupPanel";
 import type { CompanyRecord } from "../lib/db/client";
 import {
   clearCompanyLogo,
@@ -148,6 +153,9 @@ export function CompaniesPage() {
       if (isTauriRuntime()) {
         const path = await backupCompany(c);
         if (path) setNotice(`Backed up “${c.name}” to ${path}`);
+      } else if (isBrowserMode()) {
+        const filename = await browserDownloadBackup(c);
+        setNotice(`Backed up “${c.name}” as ${filename}`);
       } else {
         const filename = await remoteDownloadBackup(c.id);
         setNotice(`Backed up “${c.name}” as ${filename}`);
@@ -305,6 +313,8 @@ export function CompaniesPage() {
           </form>
         </section>
       </div>
+
+      <DriveBackupPanel />
 
       {company && allowed("manage_company") && (
         <section className="panel" style={{ marginTop: "1rem" }}>

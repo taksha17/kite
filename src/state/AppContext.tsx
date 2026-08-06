@@ -17,6 +17,7 @@ import {
   type CompanyRecord,
 } from "../lib/db/client";
 import { setCurrentUser } from "../lib/db/session";
+import { startDriveAutosync } from "../lib/gdrive/autosync";
 import {
   authenticate,
   countUsers,
@@ -203,6 +204,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (perm: Permission) => can(user?.role as UserRole, perm),
     [user],
   );
+
+  useEffect(() => startDriveAutosync(), []);
 
   useEffect(() => {
     (async () => {

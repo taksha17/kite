@@ -32,3 +32,29 @@ export async function ensureAppDataReady(): Promise<void> {
     await mkdir(appData, { recursive: true });
   }
 }
+
+/**
+ * Browser-local backup: exports the sql.js database from IndexedDB and
+ * triggers a browser download (no Tauri fs, no server involved).
+ */
+export async function browserDownloadBackup(
+  company: CompanyRecord,
+): Promise<string> {
+  const { flushBrowserInstances, readBrowserDbBytes } = await import("./browser");
+  await flushBrowserInstances();
+  const bytes = await readBrowserDbBytes(company.db_file);
+  if (!bytes) {
+    throw new Error(`No local data found for “${company.name}” on this device.`);
+  }
+  const filename = `${company.slug}-backup.kite.db`;
+  const blob = new Blob([bytes as BlobPart], { type: "application/octet-stream" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+  return filename;
+}

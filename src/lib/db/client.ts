@@ -20,12 +20,14 @@ import {
 import { ensureIntegrationSchema } from "./integrations";
 import {
   clearServerToken,
+  isBrowserMode,
   isRemoteMode,
   RemoteCompanyDb,
   remoteCreateCompany,
   remoteListCompanies,
   remoteUpdateGst,
 } from "../server/remote";
+import { openBrowserDb } from "./browser";
 
 export type {
   CompanyRecord,
@@ -67,6 +69,14 @@ function companyPath(dbFile: string): string {
   return `sqlite:${dbFile}`;
 }
 
+/** Opens a company database file on-device (Tauri SQLite or browser sql.js). */
+async function openLocalCompanyDb(dbFile: string): Promise<Database> {
+  if (isBrowserMode()) {
+    return (await openBrowserDb(dbFile)) as unknown as Database;
+  }
+  return Database.load(companyPath(dbFile));
+}
+
 async function closePool(db: Database | null): Promise<void> {
   if (!db) return;
   try {
@@ -106,7 +116,9 @@ export async function getRegistry(): Promise<Database> {
       registry = null;
     }
   }
-  registry = await Database.load(REGISTRY_PATH);
+  registry = isBrowserMode()
+    ? ((await openBrowserDb("kite-registry.db")) as unknown as Database)
+    : await Database.load(REGISTRY_PATH);
   await execAll(registry, REGISTRY_SCHEMA_STATEMENTS);
   await ensureColumns(registry, REGISTRY_COLUMN_MIGRATIONS);
   return registry;
@@ -181,7 +193,7 @@ export async function createCompany(input: {
     setActiveCompanyDb(null, null);
   }
 
-  const opened = await Database.load(companyPath(dbFile));
+  const opened = await openLocalCompanyDb(dbFile);
   await execAll(opened, COMPANY_SCHEMA_STATEMENTS);
   await seedCompany(opened, {
     name: input.name.trim(),
@@ -358,7 +370,7 @@ export async function openCompany(company: CompanyRecord): Promise<Database> {
     setActiveCompanyDb(null, null);
   }
 
-  const opened = await Database.load(companyPath(company.db_file));
+  const opened = await openLocalCompanyDb(company.db_file);
   await opened.execute("PRAGMA foreign_keys = ON");
   await ensureColumns(opened, COMPANY_COLUMN_MIGRATIONS);
   await ensureInventorySchema(opened);

@@ -20,9 +20,63 @@ export function isTauriRuntime(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
+/**
+ * Where the app's data lives:
+ * - tauri   — desktop app, local SQLite files
+ * - remote  — browser/PWA talking to a kite-server on the same origin
+ * - browser — serverless PWA, SQLite-in-WASM on this device (+ Drive backup)
+ */
+type RuntimeMode = "tauri" | "remote" | "browser";
+
+let runtimeMode: RuntimeMode = isTauriRuntime() ? "tauri" : "remote";
+
+/**
+ * Detects remote vs browser mode by probing for the kite-server API.
+ * Call once before rendering (main.tsx); browsers without a server on
+ * the origin fall back to browser-local mode. A localStorage override
+ * ("kite.runtimeMode" = "browser" | "remote") forces a mode for testing.
+ */
+export async function initRuntimeMode(): Promise<RuntimeMode> {
+  if (isTauriRuntime()) {
+    runtimeMode = "tauri";
+    return runtimeMode;
+  }
+  try {
+    const forced = localStorage.getItem("kite.runtimeMode");
+    if (forced === "browser" || forced === "remote") {
+      runtimeMode = forced;
+      return runtimeMode;
+    }
+  } catch {
+    // localStorage unavailable — probe normally
+  }
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3000);
+    const response = await fetch(`${window.location.origin}/api/companies`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    const contentType = response.headers.get("Content-Type") || "";
+    // SPA fallbacks may answer 200 HTML for /api/* — only JSON counts.
+    runtimeMode =
+      response.ok && contentType.includes("application/json")
+        ? "remote"
+        : "browser";
+  } catch {
+    runtimeMode = "browser";
+  }
+  return runtimeMode;
+}
+
 /** True when the app runs in a browser/PWA against kite-server. */
 export function isRemoteMode(): boolean {
-  return !isTauriRuntime();
+  return !isTauriRuntime() && runtimeMode === "remote";
+}
+
+/** True when the app runs serverless in a browser (sql.js + IndexedDB). */
+export function isBrowserMode(): boolean {
+  return !isTauriRuntime() && runtimeMode === "browser";
 }
 
 function baseUrl(): string {

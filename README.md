@@ -59,6 +59,7 @@ company setup to GST invoice to Excel export.
 - **Inventory MVP:** units, godowns, stock items (fixed purchase rate), sales/purchase stock lines, stock journal, stock summary
 - **Multi-user MVP:** per-company logins, Owner/Accountant/Data Entry roles, voucher audit log
 - **Kite Team:** optional multi-user server (`kite-server`) with the same UI as a PWA — per-company SQLite, JWT sessions, owner-only backups
+- **Phone-only mode:** run Kite entirely in a phone browser — SQLite-in-WASM on the device, **Google sign-in with snapshots backing up to the owner's own Drive**, restore on a new phone in one tap. No PC, no server — [docs/google-drive.md](./docs/google-drive.md)
 - **PDF invoices:** tax invoice preview + download for Sales vouchers; email via your own SMTP
 - **e-Way bills:** generate NIC e-way bills straight from the invoice (sandbox/production endpoints, per-company credentials)
 - **AI quick entry (optional, BYOK):** describe a voucher in one sentence and OpenAI/Anthropic/Gemini drafts it into the form for review — the AI can only draft, never post; keys stay server-side on Team, in-app on Solo
@@ -141,6 +142,7 @@ src/                   React UI + TypeScript accounting engine
 src/lib/accounting/    Pure posting / report math (unit tested)
 src/lib/db/            SQLite schema + company I/O (local and remote)
 src/lib/server/        Kite Team client (HTTP data layer)
+src/lib/gdrive/        Phone-only mode: Google sign-in + Drive snapshots
 src/lib/ai/            AI quick entry (prompt, strict parse, providers)
 src/lib/ewaybill/      NIC e-way bill client
 src-tauri/             Tauri shell (Rust)
@@ -154,7 +156,8 @@ docs/                  Getting started, deployment
 1. **Done** — core books, GST invoices & Excel reports, inventory, roles & audit
 2. **Done** — PDF invoices + email, e-way bills, Kite Team server + PWA
 3. **Done** — AI quick entry (BYOK, draft-only) on Solo and Team
-4. **Next** — bank-statement import, ask-my-books Q&A, bill capture
+4. **Done** — phone-only PWA with Google Drive backup (docs/google-drive.md)
+5. **Next** — bank-statement import, ask-my-books Q&A, bill capture
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 

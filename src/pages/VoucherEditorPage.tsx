@@ -27,6 +27,7 @@ import {
 import { draftVoucher } from "../lib/ai/client";
 import { aiConfigured, getAiSettings } from "../lib/db/ai";
 import type { ParsedDraft } from "../lib/ai/parse";
+import { InlineItemForm, InlinePartyForm } from "../components/InlineMasters";
 import { useApp } from "../state/AppContext";
 
 const TYPES: { code: VoucherTypeCode; label: string }[] = [
@@ -92,6 +93,16 @@ export function VoucherEditorPage() {
   const [godowns, setGodowns] = useState<GodownRow[]>([]);
   const [useStock, setUseStock] = useState(false);
   const [stockLines, setStockLines] = useState<StockDraft[]>([emptyStock()]);
+
+  // Inline master create/edit (party / stock item) without leaving the form.
+  const [partyForm, setPartyForm] = useState<"closed" | "new" | "edit">(
+    "closed",
+  );
+  const [plainPartyForm, setPlainPartyForm] = useState(false);
+  const [itemForm, setItemForm] = useState<{
+    index: number;
+    mode: "new" | "edit";
+  } | null>(null);
 
   const [paymentMode, setPaymentMode] = useState("");
   const [reverseCharge, setReverseCharge] = useState(false);
@@ -533,24 +544,44 @@ export function VoucherEditorPage() {
         {isGstVoucher ? (
           <>
             <div className="form-row">
-              <label>
-                Party
-                <select
-                  value={partyId}
-                  onChange={(e) =>
-                    setPartyId(e.target.value ? Number(e.target.value) : "")
-                  }
-                  required
-                >
-                  <option value="">Select party</option>
-                  {parties.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                      {p.gstin ? ` (${p.gstin})` : ""}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div>
+                <label>
+                  Party
+                  <select
+                    value={partyId}
+                    onChange={(e) =>
+                      setPartyId(e.target.value ? Number(e.target.value) : "")
+                    }
+                    required
+                  >
+                    <option value="">Select party</option>
+                    {parties.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                        {p.gstin ? ` (${p.gstin})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="cta-row" style={{ marginTop: "0.25rem" }}>
+                  <button
+                    type="button"
+                    className="ghost"
+                    onClick={() => setPartyForm("new")}
+                  >
+                    + New party
+                  </button>
+                  {partyId && (
+                    <button
+                      type="button"
+                      className="ghost"
+                      onClick={() => setPartyForm("edit")}
+                    >
+                      Edit party
+                    </button>
+                  )}
+                </div>
+              </div>
               <label>
                 Place of supply
                 <select
@@ -573,6 +604,23 @@ export function VoucherEditorPage() {
                 />
               </label>
             </div>
+
+            {partyForm !== "closed" && (
+              <InlinePartyForm
+                defaultKind={voucherType === "sales" ? "debtor" : "creditor"}
+                initial={
+                  partyForm === "edit"
+                    ? ledgers.find((l) => l.id === Number(partyId))
+                    : undefined
+                }
+                onSaved={async (ledger) => {
+                  setLedgers(await listLedgers());
+                  setPartyId(ledger.id);
+                  setPartyForm("closed");
+                }}
+                onCancel={() => setPartyForm("closed")}
+              />
+            )}
             <div className="form-row">
               <label>
                 Taxable value (₹)
@@ -671,6 +719,31 @@ export function VoucherEditorPage() {
                                 </option>
                               ))}
                             </select>
+                            <div
+                              className="cta-row"
+                              style={{ marginTop: "0.25rem" }}
+                            >
+                              <button
+                                type="button"
+                                className="ghost"
+                                onClick={() =>
+                                  setItemForm({ index, mode: "new" })
+                                }
+                              >
+                                + New
+                              </button>
+                              {line.itemId && (
+                                <button
+                                  type="button"
+                                  className="ghost"
+                                  onClick={() =>
+                                    setItemForm({ index, mode: "edit" })
+                                  }
+                                >
+                                  Edit
+                                </button>
+                              )}
+                            </div>
                           </td>
                           <td>
                             <select
@@ -828,11 +901,48 @@ export function VoucherEditorPage() {
                 >
                   Add item line
                 </button>
-                {stockItems.length === 0 && (
+                {stockItems.length === 0 && !itemForm && (
                   <p className="muted small">
-                    No items yet — create some under{" "}
-                    <Link to="/inventory">Inventory</Link>.
+                    No items yet — use “+ New” on an item line to create one.
                   </p>
+                )}
+                {itemForm && (
+                  <InlineItemForm
+                    initial={
+                      itemForm.mode === "edit"
+                        ? stockItems.find(
+                            (i) =>
+                              i.id ===
+                              Number(stockLines[itemForm.index]?.itemId),
+                          )
+                        : undefined
+                    }
+                    onSaved={async (item) => {
+                      const { index, mode } = itemForm;
+                      setStockItems(await listStockItems());
+                      setItemForm(null);
+                      if (mode === "new") {
+                        setStockLines((prev) =>
+                          prev.map((row, i) =>
+                            i === index
+                              ? {
+                                  ...row,
+                                  itemId: item.id,
+                                  rate: String(
+                                    voucherType === "sales"
+                                      ? item.sales_rate
+                                      : item.purchase_rate,
+                                  ),
+                                }
+                              : row,
+                          ),
+                        );
+                        if (item.hsn_sac) setHsn(item.hsn_sac);
+                        if (item.gst_rate != null) setGstRate(item.gst_rate);
+                      }
+                    }}
+                    onCancel={() => setItemForm(null)}
+                  />
                 )}
               </div>
             )}
@@ -1113,6 +1223,42 @@ export function VoucherEditorPage() {
               </tr>
             </tfoot>
           </table>
+        )}
+
+        {!isGstVoucher && (
+          <div style={{ marginTop: "0.5rem" }}>
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => setPlainPartyForm(true)}
+            >
+              + New party
+            </button>
+            {plainPartyForm && (
+              <InlinePartyForm
+                defaultKind={
+                  voucherType === "payment" ? "creditor" : "debtor"
+                }
+                onSaved={async (ledger) => {
+                  setLedgers(await listLedgers());
+                  setLines((prev) => {
+                    const idx = prev.findIndex((l) => !l.ledgerId);
+                    if (idx === -1) {
+                      return [
+                        ...prev,
+                        { ledgerId: ledger.id, debit: 0, credit: 0 },
+                      ];
+                    }
+                    return prev.map((l, i) =>
+                      i === idx ? { ...l, ledgerId: ledger.id } : l,
+                    );
+                  });
+                  setPlainPartyForm(false);
+                }}
+                onCancel={() => setPlainPartyForm(false)}
+              />
+            )}
+          </div>
         )}
 
         <label>

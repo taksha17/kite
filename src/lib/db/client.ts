@@ -486,6 +486,32 @@ export async function updateLedgerEmail(
   ]);
 }
 
+/** Edits a ledger/party's master fields (group and opening balances stay). */
+export async function updateLedger(
+  ledgerId: number,
+  input: {
+    name: string;
+    gstin?: string;
+    stateCode?: string;
+    email?: string;
+    address?: string;
+  },
+): Promise<void> {
+  const db = getActiveCompanyDb();
+  await db.execute(
+    `UPDATE ledger SET name = $1, gstin = $2, state_code = $3, email = $4, address = $5
+     WHERE id = $6`,
+    [
+      input.name.trim(),
+      input.gstin?.trim() || null,
+      input.stateCode || null,
+      input.email?.trim() || null,
+      input.address?.trim() || null,
+      ledgerId,
+    ],
+  );
+}
+
 export async function insertVoucher(input: {
   voucherType: string;
   date: string;

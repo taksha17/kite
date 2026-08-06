@@ -155,6 +155,38 @@ export async function createGodown(name: string): Promise<void> {
   ]);
 }
 
+/** Edits a stock item's master fields (movements and opening qty stay). */
+export async function updateStockItem(
+  itemId: number,
+  input: {
+    name: string;
+    unitId: number;
+    hsnSac?: string;
+    sku?: string;
+    gstRate?: number;
+    purchaseRate?: number;
+    salesRate?: number;
+  },
+): Promise<void> {
+  const db = getActiveCompanyDb();
+  await db.execute(
+    `UPDATE stock_item
+     SET name = $1, unit_id = $2, hsn_sac = $3, sku = $4,
+         gst_rate = $5, purchase_rate = $6, sales_rate = $7
+     WHERE id = $8`,
+    [
+      input.name.trim(),
+      input.unitId,
+      input.hsnSac?.trim() || null,
+      input.sku?.trim() || null,
+      input.gstRate ?? 18,
+      input.purchaseRate || 0,
+      input.salesRate || 0,
+      itemId,
+    ],
+  );
+}
+
 export async function createStockItem(input: {
   name: string;
   unitId: number;

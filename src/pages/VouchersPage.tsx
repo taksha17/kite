@@ -40,9 +40,14 @@ export function VouchersPage() {
           <h1>Vouchers</h1>
           <p className="lede">Day book of accepted entries.</p>
         </div>
-        <Link className="primary btn" to="/vouchers/new">
-          New voucher
-        </Link>
+        <span style={{ display: "inline-flex", gap: "0.5rem" }}>
+          <Link className="ghost btn" to="/bank-import">
+            Import statement
+          </Link>
+          <Link className="primary btn" to="/vouchers/new">
+            New voucher
+          </Link>
+        </span>
       </header>
 
       <section className="panel">

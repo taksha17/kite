@@ -571,6 +571,8 @@ export interface VoucherInput {
     freightAmount?: number;
     roundOff?: number;
   };
+  /** Provenance for imported vouchers (e.g. bank CSV) — dedup + audit trail. */
+  external?: { source: string; id: string };
 }
 
 /** 28-column value list shared by INSERT and UPDATE of the voucher header. */
@@ -687,12 +689,17 @@ export async function insertVoucher(input: VoucherInput): Promise<number> {
       payment_mode, reverse_charge, buyer_order_no, supplier_ref, vehicle_no,
       delivery_date, transport, terms_of_delivery,
       ship_to_name, ship_to_address, ship_to_state, ship_to_gstin,
-      freight_amount, round_off
+      freight_amount, round_off, external_source, external_id
     ) VALUES (
       $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-      $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28
+      $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28,
+      $29, $30
     )`,
-    voucherHeaderValues(input),
+    [
+      ...voucherHeaderValues(input),
+      input.external?.source ?? null,
+      input.external?.id ?? null,
+    ],
   );
   const voucherId = inserted.lastInsertId ?? 0;
   if (!voucherId) throw new Error("Could not save the voucher. Please retry.");

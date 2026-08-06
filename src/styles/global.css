@@ -612,6 +612,27 @@ code {
   max-width: 280px;
 }
 
+.error-text { color: #b42318; }
+.warn-text { color: #b54708; }
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.7rem 0.9rem;
+  align-items: end;
+}
+.row-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+.table-scroll { overflow-x: auto; }
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media print {
   body { background: white !important; }
   .sidebar, .no-print { display: none !important; }

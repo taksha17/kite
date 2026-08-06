@@ -8,6 +8,7 @@ const links = [
   { to: "/ledgers", label: "Ledgers" },
   { to: "/inventory", label: "Inventory" },
   { to: "/vouchers", label: "Vouchers" },
+  { to: "/bank-import", label: "Bank import" },
   { to: "/reports", label: "Reports" },
   { to: "/integrations", label: "Integrations" },
   { to: "/users", label: "Users" },
@@ -38,6 +39,7 @@ export function Layout() {
                 }
                 if (link.to === "/integrations") return allowed("manage_company");
                 if (link.to === "/inventory") return allowed("manage_inventory");
+                if (link.to === "/bank-import") return allowed("create_voucher");
                 if (link.to === "/ledgers")
                   return allowed("manage_ledgers") || allowed("create_voucher");
                 return true;

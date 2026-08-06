@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
+import { BankImportPage } from "./pages/BankImportPage";
 import { CompaniesPage } from "./pages/CompaniesPage";
 import { HomePage } from "./pages/HomePage";
 import { InvoicePage } from "./pages/InvoicePage";
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="ledgers" element={<LedgersPage />} />
             <Route path="inventory" element={<InventoryPage />} />
             <Route path="vouchers" element={<VouchersPage />} />
+            <Route path="bank-import" element={<BankImportPage />} />
           <Route path="vouchers/new" element={<VoucherEditorPage />} />
           <Route path="vouchers/:id/edit" element={<VoucherEditorPage />} />
           <Route path="vouchers/:id/invoice" element={<InvoicePage />} />

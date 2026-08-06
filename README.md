@@ -63,6 +63,7 @@ company setup to GST invoice to Excel export.
 - **PDF invoices:** tax invoice preview + download for Sales vouchers; email via your own SMTP
 - **e-Way bills:** generate NIC e-way bills straight from the invoice (sandbox/production endpoints, per-company credentials)
 - **e-Invoicing (IRN):** register B2B invoices with the government IRP from the desktop app — IRN + signed QR printed on the invoice PDF, cancel-IRN support, free direct NIC API (no GSP fees), sandbox/production presets
+- **Bank statement import:** drop in a CSV/Excel statement (HDFC/SBI/ICICI/Axis/Kotak layouts auto-detected) — withdrawals become payments, deposits become receipts, counter-ledgers suggested from party names and your past choices, already-imported rows auto-skipped
 - **AI quick entry (optional, BYOK):** describe a voucher in one sentence and OpenAI/Anthropic/Gemini drafts it into the form for review — the AI can only draft, never post; keys stay server-side on Team, in-app on Solo
 - Reports: Day Book, Ledger, Trial Balance, Profit & Loss, Balance Sheet
 - Balanced double-entry validation before save; posted vouchers can be edited in place (locked while an IRN/e-way bill is active)

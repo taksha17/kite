@@ -312,6 +312,43 @@ a.stat {
   color: var(--ink);
 }
 
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.checklist-item.checked {
+  opacity: 0.55;
+}
+
+.checklist-item.status-warn {
+  border-color: color-mix(in srgb, #b45309 40%, var(--line));
+}
+
+.checklist-item.status-ok {
+  border-color: color-mix(in srgb, #15803d 30%, var(--line));
+}
+
+.checklist-item .check-row {
+  flex: 1;
+  display: flex;
+}
+
 .gst-break { margin: 0.5rem 0 1rem; }
 
 .form, .form-row {

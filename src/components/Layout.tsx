@@ -12,6 +12,8 @@ const links = [
   { to: "/bank-import", label: "Bank import" },
   { to: "/ask", label: "Ask" },
   { to: "/follow-up", label: "Follow-up" },
+  { to: "/period-close", label: "Period close" },
+  { to: "/anomalies", label: "Anomalies" },
   { to: "/reports", label: "Reports" },
   { to: "/integrations", label: "Integrations" },
   { to: "/users", label: "Users" },

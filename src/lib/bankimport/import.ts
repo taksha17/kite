@@ -40,6 +40,9 @@ export interface ImportRow extends ParsedTxn {
   hash: string;
   duplicate: boolean;
   excluded: boolean;
+  /** Sales invoice this deposit was matched to (receipt narration). */
+  matchedInvoiceId?: number | null;
+  matchedInvoiceLabel?: string | null;
 }
 
 export interface ImportSummary {
@@ -75,11 +78,16 @@ export async function importRows(
           { ledgerId: bankLedgerId, debit: 0, credit: amount },
         ];
     try {
+      const invoiceNote =
+        isReceipt && row.matchedInvoiceLabel
+          ? `Against ${row.matchedInvoiceLabel}`
+          : "";
+      const narration = [row.narration, invoiceNote].filter(Boolean).join(" · ");
       await insertVoucher({
         voucherType: isReceipt ? "receipt" : "payment",
         date: row.date,
         number: row.reference || undefined,
-        narration: row.narration,
+        narration,
         totalAmount: amount,
         lines,
         external: { source: BANK_IMPORT_SOURCE, id: row.hash },

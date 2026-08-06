@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { formatInr } from "../lib/accounting/engine";
 import { listLedgers, type LedgerRow } from "../lib/db/client";
+import { aiSuggestBankLedgers } from "../lib/bankimport/aiSuggest";
 import {
   fetchImportedHashes,
   importRows,
@@ -9,6 +10,10 @@ import {
   type ImportRow,
   type ImportSummary,
 } from "../lib/bankimport/import";
+import {
+  fetchRecentSalesInvoices,
+  matchDepositToInvoice,
+} from "../lib/bankimport/matchInvoices";
 import {
   applyMapping,
   guessMapping,
@@ -55,6 +60,8 @@ export function BankImportPage() {
   );
   const [bulkLedgerId, setBulkLedgerId] = useState<number>(0);
   const [busy, setBusy] = useState(false);
+  const [busyLabel, setBusyLabel] = useState("Working…");
+  const [aiNotice, setAiNotice] = useState<string | null>(null);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
 
   const bankLedgers = useMemo(
@@ -116,29 +123,103 @@ export function BankImportPage() {
       return;
     }
     setError(null);
+    setAiNotice(null);
+    setBusyLabel("Matching…");
     setBusy(true);
     try {
-      const [rules, existing] = await Promise.all([
+      const [rules, existing, invoices] = await Promise.all([
         getBankRules(),
         fetchImportedHashes(),
+        fetchRecentSalesInvoices(),
       ]);
       const sugg = new Map<string, string>();
+      const usedInvoiceIds = new Set<number>();
       const prepared: ImportRow[] = preview.txns.map((txn) => {
         const hash = txnHash(txn);
         const duplicate = existing.has(hash);
+        if (duplicate) {
+          return {
+            ...txn,
+            hash,
+            duplicate: true,
+            excluded: true,
+            ledgerId: null,
+          };
+        }
+
         const suggestion = suggestLedger(txn.narration, rules, counterLedgers);
+        let ledgerId = suggestion?.ledgerId ?? null;
+        let matchedInvoiceId: number | null = null;
+        let matchedInvoiceLabel: string | null = null;
         if (suggestion) sugg.set(hash, suggestion.label);
+
+        // Deposits with no rule/party hit → try matching a recent sales invoice.
+        if (!ledgerId && txn.deposit > 0) {
+          const inv = matchDepositToInvoice(
+            txn.deposit,
+            txn.narration,
+            txn.date,
+            invoices,
+            usedInvoiceIds,
+          );
+          if (inv) {
+            usedInvoiceIds.add(inv.id);
+            ledgerId = inv.partyLedgerId;
+            matchedInvoiceId = inv.id;
+            matchedInvoiceLabel = inv.number
+              ? `Inv ${inv.number}`
+              : `Sale #${inv.id}`;
+            sugg.set(
+              hash,
+              `invoice · ${inv.partyName}${inv.number ? ` · ${inv.number}` : ""}`,
+            );
+          }
+        }
+
         return {
           ...txn,
           hash,
-          duplicate,
-          excluded: duplicate,
-          ledgerId: duplicate ? null : (suggestion?.ledgerId ?? null),
+          duplicate: false,
+          excluded: false,
+          ledgerId,
+          matchedInvoiceId,
+          matchedInvoiceLabel,
         };
       });
       setTxnRows(prepared);
       setSuggestions(sugg);
       setStep("review");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runAiSuggest() {
+    setBusyLabel("Asking AI…");
+    setBusy(true);
+    setError(null);
+    setAiNotice(null);
+    try {
+      const { suggestions: aiHits, warnings } = await aiSuggestBankLedgers(
+        txnRows,
+        counterLedgers,
+      );
+      if (warnings.length) setAiNotice(warnings.join(" "));
+      if (aiHits.length === 0) return;
+      setTxnRows((prev) =>
+        prev.map((r) => {
+          const hit = aiHits.find((s) => s.hash === r.hash);
+          if (!hit || r.ledgerId) return r;
+          return { ...r, ledgerId: hit.ledgerId };
+        }),
+      );
+      setSuggestions((prev) => {
+        const next = new Map(prev);
+        for (const s of aiHits) next.set(s.hash, s.label);
+        return next;
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -180,6 +261,7 @@ export function BankImportPage() {
       setError("Pick the bank ledger this statement belongs to.");
       return;
     }
+    setBusyLabel("Importing…");
     setBusy(true);
     setError(null);
     try {
@@ -209,7 +291,8 @@ export function BankImportPage() {
         <div>
           <h1>Bank statement import</h1>
           <p className="lede">
-            Turn a bank statement into payment &amp; receipt vouchers.
+            Turn a bank statement into payment &amp; receipt vouchers — with
+            invoice matching and AI ledger suggestions.
           </p>
         </div>
         <Link className="ghost btn" to="/vouchers">
@@ -250,8 +333,10 @@ export function BankImportPage() {
           <p className="muted small" style={{ marginTop: "0.8rem" }}>
             Works with exports from most Indian banks — HDFC, SBI, ICICI, Axis,
             Kotak and others. Deposits become receipts, withdrawals become
-            payments. PDF statements are not supported yet — export CSV or
-            Excel from net-banking instead.
+            payments. Unmapped deposits are matched to recent sales invoices when
+            amounts and names line up; remaining rows can use AI suggestions.
+            PDF statements are not supported yet — export CSV or Excel from
+            net-banking instead.
           </p>
         </section>
       )}
@@ -338,6 +423,7 @@ export function BankImportPage() {
                 gap: "0.6rem",
                 marginBottom: "0.7rem",
                 alignItems: "center",
+                flexWrap: "wrap",
               }}
             >
               <select
@@ -356,11 +442,25 @@ export function BankImportPage() {
                 type="button"
                 className="ghost btn"
                 onClick={applyBulk}
-                disabled={!bulkLedgerId}
+                disabled={!bulkLedgerId || busy}
               >
                 Apply
               </button>
+              <button
+                type="button"
+                className="ghost btn"
+                onClick={() => void runAiSuggest()}
+                disabled={busy}
+                title="Ask AI to pick counter-ledgers for unmapped rows"
+              >
+                {busy ? busyLabel : "Suggest with AI"}
+              </button>
             </div>
+          )}
+          {aiNotice && (
+            <p className="muted small" style={{ marginBottom: "0.6rem" }}>
+              {aiNotice}
+            </p>
           )}
 
           <div className="table-scroll">
@@ -423,11 +523,20 @@ export function BankImportPage() {
                         style={{ minWidth: 160, width: "100%" }}
                         value={r.ledgerId ?? 0}
                         disabled={r.duplicate || r.excluded}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const ledgerId = Number(e.target.value) || null;
                           updateRow(r.hash, {
-                            ledgerId: Number(e.target.value) || null,
-                          })
-                        }
+                            ledgerId,
+                            // Manual pick overrides any invoice link.
+                            matchedInvoiceId: null,
+                            matchedInvoiceLabel: null,
+                          });
+                          setSuggestions((prev) => {
+                            const next = new Map(prev);
+                            next.delete(r.hash);
+                            return next;
+                          });
+                        }}
                       >
                         <option value={0}>— pick ledger —</option>
                         {counterLedgers.map((l) => (
@@ -458,7 +567,7 @@ export function BankImportPage() {
               onClick={() => void runImport()}
             >
               {busy
-                ? "Importing…"
+                ? busyLabel
                 : `Import ${readyRows.length} voucher${readyRows.length === 1 ? "" : "s"}`}
             </button>
           </div>
@@ -503,6 +612,8 @@ export function BankImportPage() {
                 setRows([]);
                 setMapping(null);
                 setError(null);
+                setAiNotice(null);
+                setSuggestions(new Map());
               }}
             >
               Import another

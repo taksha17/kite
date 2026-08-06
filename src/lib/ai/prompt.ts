@@ -34,6 +34,8 @@ export function buildDraftPrompt(
     "- gstRate: from the sentence, else the item's default from the list, else null.",
     "- placeOfSupply: infer from the party's state when obvious, else null.",
     "- Date words like 'today'/'yesterday' resolve against the provided today; otherwise null.",
+    "- The sentence may be English, Hindi, or Hinglish (romanised Hindi, e.g. 'Agarwal ko 2 mouse becha UPI pe'). Interpret verbs: becha/bikri/beche = sales; kharida/liya = purchase; diya/bhara/payment kiya = payment; mila/prapt/aaya = receipt.",
+    "- Party and item names may be transliterated or misspelled — match loosely against the provided lists (e.g. 'Agrawal' ≈ 'Agarwal'); still copy ids only from the lists.",
     "- If nothing sensible can be extracted, answer with every field null.",
   ].join("\n");
 

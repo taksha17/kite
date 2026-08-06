@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { roleLabel } from "../lib/auth/permissions";
 import { AuthGatePage } from "../pages/AuthGatePage";
+import { CommandPalette } from "./CommandPalette";
 import { useApp } from "../state/AppContext";
 
 const links = [
@@ -87,6 +88,7 @@ export function Layout() {
       <main className="main">
         {locked ? <AuthGatePage /> : <Outlet />}
       </main>
+      {company && !locked && <CommandPalette />}
     </div>
   );
 }

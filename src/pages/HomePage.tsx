@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { formatInr } from "../lib/accounting/engine";
+import { AiOnboardingWizard } from "../components/AiOnboardingWizard";
 import {
   computeProfitAndLoss,
   type LedgerBalanceInput,
@@ -13,6 +14,8 @@ export function HomePage() {
   const [voucherCount, setVoucherCount] = useState(0);
   const [netProfit, setNetProfit] = useState(0);
   const [cashBank, setCashBank] = useState(0);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardDismissed, setWizardDismissed] = useState(false);
 
   useEffect(() => {
     if (!company) return;
@@ -114,6 +117,37 @@ export function HomePage() {
           <p className="stat-value">{voucherCount}</p>
         </div>
       </div>
+
+      {voucherCount === 0 && !wizardDismissed && !wizardOpen && (
+        <section className="panel" style={{ maxWidth: 760 }}>
+          <div className="panel-head">
+            <h2 style={{ margin: 0 }}>New books? Let AI set them up</h2>
+            <button
+              type="button"
+              className="ghost btn"
+              onClick={() => setWizardDismissed(true)}
+            >
+              Skip
+            </button>
+          </div>
+          <p className="muted small">
+            Describe your business in one sentence — the AI proposes your
+            starting ledgers, stock items and GST setting. You review before
+            anything is created.
+          </p>
+          <button
+            type="button"
+            className="primary btn"
+            onClick={() => setWizardOpen(true)}
+          >
+            Set up with AI
+          </button>
+        </section>
+      )}
+
+      {wizardOpen && (
+        <AiOnboardingWizard onClose={() => setWizardOpen(false)} />
+      )}
 
       <section className="panel">
         <h2>Quick actions</h2>

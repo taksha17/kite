@@ -1,0 +1,11 @@
+# Keep builds within this machine's memory budget.
+# 16-thread CPU + 7.4 GB RAM: default 16 parallel rustc jobs OOM-thrashes;
+# 4 jobs keeps peak build memory ~6 GB and is actually faster under pressure.
+[build]
+jobs = 4
+incremental = true
+
+# Faster + much lower-memory linker than GNU ld (install: sudo apt install lld)
+# Uncomment after lld is installed:
+# [target.x86_64-unknown-linux-gnu]
+# rustflags = ["-C", "link-arg=-fuse-ld=lld"]

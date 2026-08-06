@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState, type FormEvent, Fragment } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  Fragment,
+} from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { formatInr, sumLines, validateVoucher } from "../lib/accounting/engine";
 import {
@@ -29,6 +36,8 @@ import {
   type StockItemRow,
 } from "../lib/db/inventory";
 import { draftVoucher } from "../lib/ai/client";
+import { AI_EXAMPLE_SENTENCES } from "../lib/ai/examples";
+import { useSpeechInput } from "../lib/ai/useSpeech";
 import { aiConfigured, getAiSettings } from "../lib/db/ai";
 import type { ParsedDraft } from "../lib/ai/parse";
 import { InlineItemForm, InlinePartyForm } from "../components/InlineMasters";
@@ -129,10 +138,13 @@ export function VoucherEditorPage() {
   const [showInvoiceExtras, setShowInvoiceExtras] = useState(false);
 
   const [aiReady, setAiReady] = useState(false);
-  const [aiSentence, setAiSentence] = useState("");
+  const [aiSentence, setAiSentence] = useState(() => params.get("ai") || "");
   const [aiBusy, setAiBusy] = useState(false);
   const [aiWarnings, setAiWarnings] = useState<string[]>([]);
   const [aiApplied, setAiApplied] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const autoDrafted = useRef(false);
+  const speech = useSpeechInput((t) => setAiSentence(t));
 
   const canHaveStock = voucherType === "sales" || voucherType === "purchase";
 
@@ -403,6 +415,29 @@ export function VoucherEditorPage() {
     }
   }
 
+  // Cmd-K palette handoff: /vouchers/new?ai=<sentence>&go=1 drafts on arrival.
+  useEffect(() => {
+    if (
+      !editId &&
+      aiReady &&
+      params.get("go") === "1" &&
+      aiSentence.trim() &&
+      ledgers.length > 0 &&
+      !autoDrafted.current
+    ) {
+      autoDrafted.current = true;
+      void onAiDraft();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId, aiReady, aiSentence, ledgers.length]);
+
+  // A draft is only a proposal — bring the review form into view.
+  useEffect(() => {
+    if (aiApplied) {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [aiApplied]);
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -554,9 +589,11 @@ export function VoucherEditorPage() {
           <p className="lede">
             {editId
               ? "Re-posts the voucher with your changes; lines and stock movements are replaced."
-              : isGstVoucher
-                ? "GST invoice — tax splits auto-post to CGST/SGST or IGST."
-                : "Debits must equal credits before save."}
+              : aiReady
+                ? "Describe the transaction — Kite drafts it, you review and accept."
+                : isGstVoucher
+                  ? "GST invoice — tax splits auto-post to CGST/SGST or IGST."
+                  : "Debits must equal credits before save."}
           </p>
         </div>
         <Link className="ghost btn" to="/vouchers">
@@ -573,37 +610,58 @@ export function VoucherEditorPage() {
         <p className="muted">Loading voucher…</p>
       )}
 
-      {aiReady && !editId && (
-        <section className="panel" style={{ marginBottom: "1rem" }}>
-          <h2 style={{ marginTop: 0 }}>AI quick entry</h2>
+      {!editId && aiReady && (
+        <section className="panel ai-hero" style={{ marginBottom: "1rem" }}>
+          <h2 style={{ marginTop: 0 }}>Tell Kite what happened</h2>
           <p className="muted small">
-            Describe the voucher in one sentence. The AI drafts it into the
-            form below for your review — nothing posts until you press Accept
-            voucher.
+            One sentence in English or Hinglish. The AI drafts the voucher into
+            the form below — nothing posts until you press Accept voucher.
           </p>
-          <div className="form-row" style={{ alignItems: "end" }}>
-            <label style={{ flex: 1 }}>
-              Sentence
-              <input
-                value={aiSentence}
-                onChange={(e) => setAiSentence(e.target.value)}
-                placeholder="Sold 2 Wireless Mouse to Agarwal @799 on UPI"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    void onAiDraft();
-                  }
-                }}
-              />
-            </label>
+          <textarea
+            rows={2}
+            autoFocus
+            value={aiSentence}
+            onChange={(e) => setAiSentence(e.target.value)}
+            placeholder="Sold 2 Wireless Mouse to Agarwal @799 on UPI"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                void onAiDraft();
+              }
+            }}
+          />
+          <div className="chip-row" style={{ margin: "0.5rem 0 0.75rem" }}>
+            {AI_EXAMPLE_SENTENCES.map((ex) => (
+              <button
+                key={ex}
+                type="button"
+                className="chip"
+                onClick={() => setAiSentence(ex)}
+              >
+                {ex}
+              </button>
+            ))}
+          </div>
+          <div className="cta-row">
+            {speech.supported && (
+              <button
+                type="button"
+                className={speech.listening ? "secondary" : "ghost"}
+                onClick={speech.toggle}
+                title="Dictate in English or Hinglish"
+              >
+                {speech.listening ? "● Listening… tap to stop" : "Dictate"}
+              </button>
+            )}
             <button
               type="button"
-              className="secondary"
+              className="primary"
               disabled={aiBusy || !aiSentence.trim()}
               onClick={() => void onAiDraft()}
             >
-              {aiBusy ? "Drafting…" : "Draft with AI"}
+              {aiBusy ? "Drafting…" : "Draft voucher"}
             </button>
+            <span className="muted small">or fill the form manually below</span>
           </div>
           {aiApplied && (
             <p className="notice">
@@ -621,7 +679,15 @@ export function VoucherEditorPage() {
         </section>
       )}
 
-      <form className="panel" onSubmit={onSubmit}>
+      {!editId && !aiReady && (
+        <p className="muted small" style={{ marginTop: 0 }}>
+          Tip: set up AI quick entry under{" "}
+          <Link to="/companies">Companies</Link> to draft vouchers from a
+          sentence — or fill the form manually below.
+        </p>
+      )}
+
+      <form className="panel" onSubmit={onSubmit} ref={formRef}>
         <div className="form-row">
           <label>
             Type

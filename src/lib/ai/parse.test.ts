@@ -166,6 +166,60 @@ describe("parseVoucherDraft", () => {
     expect(warnings.some((w) => /Manu Bhikhari/i.test(w))).toBe(true);
   });
 
+  it("derives party state from GSTIN when place of supply is missing", () => {
+    const raw = JSON.stringify({
+      voucherType: "purchase",
+      partyName: "Manu Bhikhari Traders",
+      partyGstin: "24ABCDE1234F1Z5",
+    });
+    const { seedParty } = parseVoucherDraft(raw, ctx);
+    expect(seedParty?.stateCode).toBe("24");
+    expect(seedParty?.gstin).toBe("24ABCDE1234F1Z5");
+  });
+
+  it("seeds unknown stock items instead of dropping the lines", () => {
+    const raw = JSON.stringify({
+      voucherType: "purchase",
+      partyId: 5,
+      gstRate: 18,
+      stockLines: [
+        { itemName: "Copper Wire 2.5mm", qty: 10, rate: 45, hsn: "7413" },
+        { itemId: 12, qty: 1, rate: 799 },
+      ],
+    });
+    const { draft, seedItems, warnings } = parseVoucherDraft(raw, ctx);
+    expect(seedItems).toEqual([
+      expect.objectContaining({
+        name: "Copper Wire 2.5mm",
+        hsn: "7413",
+        rate: 45,
+        qty: 10,
+        gstRate: 18,
+      }),
+    ]);
+    expect(draft.stockLines).toHaveLength(2);
+    expect(draft.stockLines[0]).toMatchObject({
+      itemId: null,
+      qty: 10,
+      rate: 45,
+      description: "Copper Wire 2.5mm",
+    });
+    expect(draft.stockLines[1].itemId).toBe(12);
+    expect(warnings.some((w) => /Copper Wire/i.test(w))).toBe(true);
+  });
+
+  it("strips an invalid bill GSTIN from the party seed", () => {
+    const raw = JSON.stringify({
+      voucherType: "purchase",
+      partyName: "Bad Gstin Co",
+      partyGstin: "NOT-A-GSTIN",
+    });
+    const { seedParty, warnings } = parseVoucherDraft(raw, ctx);
+    expect(seedParty?.name).toBe("Bad Gstin Co");
+    expect(seedParty?.gstin).toBeUndefined();
+    expect(warnings.some((w) => /invalid/i.test(w))).toBe(true);
+  });
+
   it("matches a party by GSTIN from the bill", () => {
     const raw = JSON.stringify({
       voucherType: "purchase",

@@ -36,11 +36,12 @@ import {
   type StockItemRow,
 } from "../lib/db/inventory";
 import { draftVoucher, draftVoucherFromBill } from "../lib/ai/client";
+import { createMastersFromSeeds } from "../lib/ai/createMasters";
 import { AI_EXAMPLE_SENTENCES } from "../lib/ai/examples";
 import { fileToBillDataUrl } from "../lib/ai/image";
 import { useSpeechInput } from "../lib/ai/useSpeech";
 import { aiConfigured, getAiSettings } from "../lib/db/ai";
-import type { ParsedDraft } from "../lib/ai/parse";
+import type { ParsedDraft, SeedItem, SeedParty } from "../lib/ai/parse";
 import { InlineItemForm, InlinePartyForm } from "../components/InlineMasters";
 import { useApp } from "../state/AppContext";
 
@@ -144,11 +145,9 @@ export function VoucherEditorPage() {
   const [aiWaitSecs, setAiWaitSecs] = useState(0);
   const [aiWarnings, setAiWarnings] = useState<string[]>([]);
   const [aiApplied, setAiApplied] = useState(false);
-  const [partySeed, setPartySeed] = useState<{
-    name?: string;
-    gstin?: string;
-    stateCode?: string;
-  } | null>(null);
+  const [partySeed, setPartySeed] = useState<SeedParty | null>(null);
+  const [itemSeeds, setItemSeeds] = useState<SeedItem[]>([]);
+  const [mastersBusy, setMastersBusy] = useState(false);
   const [billPreview, setBillPreview] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const billInputRef = useRef<HTMLInputElement>(null);
@@ -443,16 +442,132 @@ export function VoucherEditorPage() {
     applyAiDraft(parsed);
     setAiWarnings(parsed.warnings);
     setAiApplied(true);
+    const seeds = parsed.seedItems ?? [];
+    setItemSeeds(seeds);
     if (parsed.seedParty) {
       setPartySeed(parsed.seedParty);
-      const t = parsed.draft.voucherType ?? voucherType;
-      if (gstEnabled && (t === "purchase" || t === "sales")) {
-        setPartyForm("new");
-      } else {
-        setPlainPartyForm(true);
-      }
     } else {
       setPartySeed(null);
+    }
+    // Prefer one-click Create masters when anything is missing; skip auto-opening
+    // the party form so the user isn't interrupted mid-review.
+    if (!parsed.seedParty && seeds.length === 0) {
+      /* nothing to create */
+    }
+  }
+
+  async function onCreateMastersFromBill() {
+    if (!partySeed && itemSeeds.length === 0) return;
+    setMastersBusy(true);
+    setError(null);
+    try {
+      const kind: "debtor" | "creditor" =
+        voucherType === "purchase" ? "creditor" : "debtor";
+      const result = await createMastersFromSeeds({
+        party: partySeed,
+        items: itemSeeds,
+        kind,
+        asPurchase: voucherType === "purchase",
+      });
+      const nextLedgers = await listLedgers();
+      const nextItems = await listStockItems();
+      setLedgers(nextLedgers);
+      setStockItems(nextItems);
+
+      if (result.partyId) {
+        setPartyId(result.partyId);
+        const party = nextLedgers.find((l) => l.id === result.partyId);
+        if (party?.state_code) setPlaceOfSupply(party.state_code);
+        else if (partySeed?.stateCode) setPlaceOfSupply(partySeed.stateCode);
+      }
+      if (result.itemIds.size > 0) {
+        const defGodown: number | "" =
+          godowns.find((g) => g.is_default)?.id || godowns[0]?.id || "";
+        setUseStock(true);
+        setStockLines((prev) => {
+          // Fill empty item lines from seeds by description/name order.
+          const pending = [...itemSeeds];
+          return prev.map((row) => {
+            if (row.itemId) return row;
+            const seed =
+              pending.find(
+                (s) =>
+                  s.name === row.lineDescription ||
+                  s.name === row.lineDescription.trim(),
+              ) || pending.shift();
+            if (!seed) return row;
+            const id = result.itemIds.get(seed.name.trim());
+            if (!id) return row;
+            const item = nextItems.find((i) => i.id === id);
+            return {
+              ...row,
+              itemId: id,
+              godownId: row.godownId || defGodown,
+              rate:
+                row.rate && Number(row.rate) > 0
+                  ? row.rate
+                  : String(
+                      voucherType === "purchase"
+                        ? item?.purchase_rate ?? seed.rate ?? 0
+                        : item?.sales_rate ?? seed.rate ?? 0,
+                    ),
+              lineDescription: row.lineDescription || seed.name,
+            };
+          });
+        });
+        // Append any seeds that weren't represented as pending lines.
+        setStockLines((prev) => {
+          const covered = new Set(
+            prev
+              .filter((r) => r.itemId)
+              .map((r) => Number(r.itemId)),
+          );
+          const extras = itemSeeds.filter((s) => {
+            const id = result.itemIds.get(s.name.trim());
+            return id != null && !covered.has(id);
+          });
+          if (extras.length === 0) return prev;
+          return [
+            ...prev,
+            ...extras.map((s) => {
+              const id = result.itemIds.get(s.name.trim())!;
+              const item = nextItems.find((i) => i.id === id);
+              return {
+                itemId: id as number | "",
+                godownId: defGodown,
+                qty: String(s.qty ?? 1),
+                rate: String(
+                  voucherType === "purchase"
+                    ? item?.purchase_rate ?? s.rate ?? 0
+                    : item?.sales_rate ?? s.rate ?? 0,
+                ),
+                batchNo: "",
+                serialNo: "",
+                lineDescription: s.name,
+              };
+            }),
+          ];
+        });
+      }
+
+      const notes = [
+        result.partyId ? `Created party “${partySeed?.name}”.` : null,
+        result.itemIds.size
+          ? `Created ${result.itemIds.size} stock item${result.itemIds.size === 1 ? "" : "s"}.`
+          : null,
+        ...result.warnings,
+      ].filter(Boolean) as string[];
+      if (notes.length) {
+        setAiWarnings((prev) => [...notes, ...prev.filter((w) => !/create it from the bill/i.test(w) && !/No party matching|No stock item matching/i.test(w))]);
+      }
+      setPartySeed(null);
+      setItemSeeds([]);
+      setPartyForm("closed");
+      setPlainPartyForm(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setMastersBusy(false);
     }
   }
 
@@ -481,6 +596,7 @@ export function VoucherEditorPage() {
     setAiWarnings([]);
     setAiApplied(false);
     setPartySeed(null);
+    setItemSeeds([]);
     try {
       const dataUrl = await fileToBillDataUrl(file);
       setBillPreview(dataUrl);
@@ -829,6 +945,61 @@ export function VoucherEditorPage() {
                   <li key={i}>{w}</li>
                 ))}
               </ul>
+            </div>
+          )}
+          {(partySeed || itemSeeds.length > 0) && (
+            <div
+              className="notice small"
+              style={{
+                marginTop: "0.6rem",
+                border: "1px solid var(--line)",
+                borderRadius: 8,
+                padding: "0.6rem 0.75rem",
+              }}
+            >
+              <strong>New masters from this bill</strong>
+              <ul style={{ margin: "0.35rem 0", paddingLeft: "1.1rem" }}>
+                {partySeed && (
+                  <li>
+                    Party: {partySeed.name}
+                    {partySeed.gstin ? ` · ${partySeed.gstin}` : ""}
+                    {partySeed.stateCode ? ` · state ${partySeed.stateCode}` : ""}
+                  </li>
+                )}
+                {itemSeeds.map((it) => (
+                  <li key={it.name}>
+                    Item: {it.name}
+                    {it.hsn ? ` · HSN ${it.hsn}` : ""}
+                    {it.rate != null ? ` · ₹${it.rate}` : ""}
+                    {it.gstRate != null ? ` · ${it.gstRate}%` : ""}
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                className="primary btn"
+                disabled={mastersBusy || aiBusy}
+                onClick={() => void onCreateMastersFromBill()}
+              >
+                {mastersBusy ? "Creating…" : "Create masters"}
+              </button>
+              <button
+                type="button"
+                className="ghost btn"
+                style={{ marginLeft: "0.5rem" }}
+                disabled={mastersBusy}
+                onClick={() => {
+                  if (partySeed) {
+                    if (gstEnabled && (voucherType === "purchase" || voucherType === "sales")) {
+                      setPartyForm("new");
+                    } else {
+                      setPlainPartyForm(true);
+                    }
+                  }
+                }}
+              >
+                Edit manually
+              </button>
             </div>
           )}
         </section>

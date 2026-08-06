@@ -1,4 +1,9 @@
 import { GST_RATES, INDIA_STATES } from "../accounting/gst";
+import {
+  isValidGstin,
+  normalizeGstin,
+  stateCodeFromGstin,
+} from "../accounting/gstin";
 import type {
   DraftContext,
   DraftContextItem,
@@ -15,12 +20,28 @@ const VOUCHER_TYPES = new Set([
   "journal",
 ]);
 
+export interface SeedParty {
+  name: string;
+  gstin?: string;
+  stateCode?: string;
+}
+
+export interface SeedItem {
+  name: string;
+  hsn?: string;
+  rate?: number;
+  gstRate?: number;
+  qty?: number;
+}
+
 export interface ParsedDraft {
   draft: VoucherDraft;
   /** Human-readable notes about fields that had to be dropped or fixed. */
   warnings: string[];
   /** When the AI named a party that isn't in the books — UI can offer create. */
-  seedParty?: { name: string; gstin?: string; stateCode?: string };
+  seedParty?: SeedParty;
+  /** Unknown stock lines from the bill — UI can create them in one click. */
+  seedItems?: SeedItem[];
 }
 
 function asString(value: unknown): string | null {
@@ -127,11 +148,19 @@ export function fuzzyMatchByName<T extends { name: string }>(
   return bestScore >= 0.5 && best ? best : null;
 }
 
+function taxableFromInclusive(
+  inclusive: number,
+  gstRate: number | null,
+): number {
+  const rate = gstRate != null && gstRate > 0 ? gstRate : 18;
+  return Math.round((inclusive / (1 + rate / 100)) * 100) / 100;
+}
+
 function resolveParty(
   obj: Record<string, unknown>,
   ctx: DraftContext,
   warnings: string[],
-): { partyId: number | null; seedParty?: ParsedDraft["seedParty"] } {
+): { partyId: number | null; seedParty?: SeedParty } {
   const partyId = firstNumber(obj.partyId, obj.party_id, obj.ledgerId);
   const name = firstString(
     obj.partyName,
@@ -141,12 +170,27 @@ function resolveParty(
       ? (obj.party as { name?: unknown }).name
       : null,
   );
-  const gstin = firstString(obj.partyGstin, obj.party_gstin, obj.gstin);
-  const stateCode = firstString(
+  const rawGstin = firstString(obj.partyGstin, obj.party_gstin, obj.gstin);
+  let gstin: string | undefined;
+  if (rawGstin) {
+    const normalized = normalizeGstin(rawGstin);
+    if (isValidGstin(normalized)) {
+      gstin = normalized;
+    } else {
+      warnings.push(
+        `Bill GSTIN “${rawGstin}” looks invalid — party will be created without it unless you fix it.`,
+      );
+    }
+  }
+  const explicitState = firstString(
     obj.placeOfSupply,
     obj.partyState,
     obj.party_state,
   );
+  const stateCode =
+    (explicitState && explicitState.length === 2 ? explicitState : null) ||
+    (gstin ? stateCodeFromGstin(gstin) : null) ||
+    undefined;
 
   if (partyId != null) {
     const party = ctx.parties.find((p) => p.id === partyId);
@@ -169,15 +213,14 @@ function resolveParty(
       return { partyId: match.id };
     }
     warnings.push(
-      `No party matching “${name}” — create or pick one in the form.`,
+      `No party matching “${name}” — create it from the bill, or pick one in the form.`,
     );
     return {
       partyId: null,
       seedParty: {
         name,
-        gstin: gstin || undefined,
-        stateCode:
-          stateCode && stateCode.length === 2 ? stateCode : undefined,
+        gstin,
+        stateCode,
       },
     };
   }
@@ -188,7 +231,8 @@ function resolveItem(
   line: Record<string, unknown>,
   ctx: DraftContext,
   warnings: string[],
-): DraftContextItem | null {
+  defaultGst: number | null,
+): { item: DraftContextItem | null; seed?: SeedItem; name: string | null } {
   const itemId = firstNumber(line.itemId, line.item_id, line.id);
   const name = firstString(
     line.itemName,
@@ -211,30 +255,49 @@ function resolveItem(
     warnings.push(
       `Matched item by name to “${byName.name}” (AI had id for “${byId.name}”).`,
     );
-    return byName;
+    return { item: byName, name };
   }
   if (byName) {
     if (itemId != null && !byId) {
       warnings.push(`Matched item by name to “${byName.name}” (AI had a wrong id).`);
     }
-    return byName;
+    return { item: byName, name };
   }
-  if (byId) return byId;
+  if (byId) return { item: byId, name };
 
   if (itemId != null) {
     warnings.push("Dropped a stock line with an item id that is not in your inventory.");
-  } else if (name) {
-    warnings.push(`No stock item matching “${name}” — create or pick one.`);
+    return { item: null, name };
   }
-  return null;
-}
-
-function taxableFromInclusive(
-  inclusive: number,
-  gstRate: number | null,
-): number {
-  const rate = gstRate != null && gstRate > 0 ? gstRate : 18;
-  return Math.round((inclusive / (1 + rate / 100)) * 100) / 100;
+  if (name) {
+    warnings.push(
+      `No stock item matching “${name}” — create it from the bill, or pick one.`,
+    );
+    const qty = firstNumber(line.qty, line.quantity, line.qty_out) ?? 1;
+    let rate = firstNumber(line.rate, line.price, line.unitPrice, line.salesRate);
+    const rateIncl = firstNumber(line.rateInclTax, line.priceIncludingTax);
+    const lineGst = firstNumber(line.gstRate, line.gst_rate) ?? defaultGst;
+    if (rate == null && rateIncl != null) {
+      rate = taxableFromInclusive(rateIncl, lineGst);
+    }
+    const hsn = firstString(line.hsn, line.hsnSac, line.hsn_sac) || undefined;
+    const gstRate =
+      lineGst != null && (GST_RATES as readonly number[]).includes(lineGst)
+        ? lineGst
+        : undefined;
+    return {
+      item: null,
+      name,
+      seed: {
+        name,
+        hsn,
+        rate: rate != null && rate >= 0 ? rate : undefined,
+        gstRate,
+        qty: qty > 0 ? qty : 1,
+      },
+    };
+  }
+  return { item: null, name: null };
 }
 
 /**
@@ -322,20 +385,37 @@ export function parseVoucherDraft(raw: string, ctx: DraftContext): ParsedDraft {
         ? obj.lines
         : [];
 
+  const seedItems: SeedItem[] = [];
+  const seenSeedNames = new Set<string>();
+
   for (const entry of rawLines) {
     if (typeof entry !== "object" || entry == null) continue;
     const line = entry as Record<string, unknown>;
-    const item = resolveItem(line, ctx, warnings);
-    if (!item) continue;
+    const resolved = resolveItem(line, ctx, warnings, draft.gstRate);
+    if (resolved.seed && !seenSeedNames.has(resolved.seed.name.toLowerCase())) {
+      seenSeedNames.add(resolved.seed.name.toLowerCase());
+      seedItems.push(resolved.seed);
+    }
+    if (!resolved.item) {
+      // Keep qty/rate on a pending line so Create masters can fill itemId later.
+      if (resolved.seed) {
+        draft.stockLines.push({
+          itemId: null,
+          qty: resolved.seed.qty ?? 1,
+          rate: resolved.seed.rate ?? null,
+          description: resolved.seed.name,
+        });
+      }
+      continue;
+    }
     const qty = firstNumber(line.qty, line.quantity, line.qty_out) ?? 1;
     let rate = firstNumber(line.rate, line.price, line.unitPrice, line.salesRate);
-    // If the model put a tax-inclusive unit price, peel GST off when asked.
     const rateIncl = firstNumber(line.rateInclTax, line.priceIncludingTax);
     if (rate == null && rateIncl != null) {
-      rate = taxableFromInclusive(rateIncl, draft.gstRate ?? item.gstRate);
+      rate = taxableFromInclusive(rateIncl, draft.gstRate ?? resolved.item.gstRate);
     }
     const parsedLine: DraftStockLine = {
-      itemId: item.id,
+      itemId: resolved.item.id,
       qty: qty > 0 ? qty : 1,
       rate: rate != null && rate >= 0 ? rate : null,
       description: firstString(line.description, line.lineDescription),
@@ -361,7 +441,27 @@ export function parseVoucherDraft(raw: string, ctx: DraftContext): ParsedDraft {
           description: null,
         });
       } else {
-        warnings.push(`No stock item matching “${loneName}” — create or pick one.`);
+        warnings.push(
+          `No stock item matching “${loneName}” — create it from the bill, or pick one.`,
+        );
+        const qty = firstNumber(obj.qty, obj.quantity) ?? 1;
+        let rate = firstNumber(obj.rate, obj.price);
+        if (rate == null && draft.taxable != null && qty > 0) {
+          rate = Math.round((draft.taxable / qty) * 100) / 100;
+        }
+        seedItems.push({
+          name: loneName,
+          rate: rate ?? undefined,
+          gstRate: draft.gstRate ?? undefined,
+          hsn: draft.hsn || undefined,
+          qty,
+        });
+        draft.stockLines.push({
+          itemId: null,
+          qty,
+          rate: rate ?? null,
+          description: loneName,
+        });
       }
     }
   }
@@ -394,7 +494,12 @@ export function parseVoucherDraft(raw: string, ctx: DraftContext): ParsedDraft {
     }
   }
 
-  return { draft, warnings, seedParty: partyResolved.seedParty };
+  return {
+    draft,
+    warnings,
+    seedParty: partyResolved.seedParty,
+    seedItems: seedItems.length ? seedItems : undefined,
+  };
 }
 
 /** True when the draft contains nothing usable at all. */

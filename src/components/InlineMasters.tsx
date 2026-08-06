@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { GST_RATES, INDIA_STATES } from "../lib/accounting/gst";
+import { assertGstinOrEmpty, stateCodeFromGstin } from "../lib/accounting/gstin";
 import {
   createParty,
   findLedgerByName,
@@ -67,7 +68,17 @@ export function InlinePartyForm({
     setBusy(true);
     setError(null);
     try {
-      const fields = { name, gstin, stateCode, email, phone, address, city, pin };
+      const cleanGstin = assertGstinOrEmpty(gstin);
+      const fields = {
+        name,
+        gstin: cleanGstin || "",
+        stateCode: stateCode || (cleanGstin ? stateCodeFromGstin(cleanGstin) || stateCode : stateCode),
+        email,
+        phone,
+        address,
+        city,
+        pin,
+      };
       if (initial) {
         // Group (debtor/creditor) is fixed on edit — moving groups would
         // need to reclassify history; kind selector is hidden then.
@@ -202,22 +213,34 @@ export function InlinePartyForm({
 
 export function InlineItemForm({
   initial,
+  seed,
   onSaved,
   onCancel,
 }: {
   initial?: StockItemRow;
+  /** Prefill for create mode (e.g. from bill capture). */
+  seed?: {
+    name?: string;
+    hsn?: string;
+    rate?: number;
+    gstRate?: number;
+  };
   onSaved: (item: StockItemRow) => void | Promise<void>;
   onCancel: () => void;
 }) {
   const [units, setUnits] = useState<UnitRow[]>([]);
-  const [name, setName] = useState(initial?.name || "");
+  const [name, setName] = useState(initial?.name || seed?.name || "");
   const [unitId, setUnitId] = useState<number | "">(initial?.unit_id || "");
-  const [salesRate, setSalesRate] = useState(String(initial?.sales_rate || 0));
-  const [purchaseRate, setPurchaseRate] = useState(
-    String(initial?.purchase_rate || 0),
+  const [salesRate, setSalesRate] = useState(
+    String(initial?.sales_rate ?? seed?.rate ?? 0),
   );
-  const [gstRate, setGstRate] = useState(initial?.gst_rate ?? 18);
-  const [hsn, setHsn] = useState(initial?.hsn_sac || "");
+  const [purchaseRate, setPurchaseRate] = useState(
+    String(initial?.purchase_rate ?? seed?.rate ?? 0),
+  );
+  const [gstRate, setGstRate] = useState(
+    initial?.gst_rate ?? seed?.gstRate ?? 18,
+  );
+  const [hsn, setHsn] = useState(initial?.hsn_sac || seed?.hsn || "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

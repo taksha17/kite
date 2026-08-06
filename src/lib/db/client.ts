@@ -1,6 +1,10 @@
 import Database from "@tauri-apps/plugin-sql";
 import { indianFyStartFor } from "../accounting/engine";
 import type { GstBreakdown } from "../accounting/gst";
+import {
+  assertGstinOrEmpty,
+  stateCodeFromGstin,
+} from "../accounting/gstin";
 import { DEFAULT_GROUPS, DEFAULT_LEDGERS, VOUCHER_TYPES } from "../accounting/seed";
 import {
   getActiveCompanyDb,
@@ -477,8 +481,10 @@ export async function createParty(input: {
     name: input.name,
     groupId: groups[0].id,
     isParty: true,
-    gstin: input.gstin,
-    stateCode: input.stateCode,
+    gstin: assertGstinOrEmpty(input.gstin),
+    stateCode:
+      input.stateCode ||
+      (input.gstin ? stateCodeFromGstin(input.gstin) || undefined : undefined),
     email: input.email,
     address: input.address,
     city: input.city,
@@ -513,14 +519,17 @@ export async function updateLedger(
   },
 ): Promise<void> {
   const db = getActiveCompanyDb();
+  const cleanGstin = assertGstinOrEmpty(input.gstin) || null;
   await db.execute(
     `UPDATE ledger SET name = $1, gstin = $2, state_code = $3, email = $4, address = $5,
        city = $6, pin = $7, phone = $8
      WHERE id = $9`,
     [
       input.name.trim(),
-      input.gstin?.trim() || null,
-      input.stateCode || null,
+      cleanGstin,
+      input.stateCode ||
+        (cleanGstin ? stateCodeFromGstin(cleanGstin) : null) ||
+        null,
       input.email?.trim() || null,
       input.address?.trim() || null,
       input.city?.trim() || null,

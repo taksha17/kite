@@ -338,10 +338,11 @@ export function VoucherEditorPage() {
     if (draft.partyId) setPartyId(draft.partyId);
     if (draft.placeOfSupply) setPlaceOfSupply(draft.placeOfSupply);
 
-    let nextGst = draft.gstRate;
+    let nextGst: number | null = draft.gstRate;
     if (nextGst == null && draft.stockLines[0]?.itemId) {
-      nextGst = stockItems.find((i) => i.id === draft.stockLines[0].itemId)
-        ?.gst_rate;
+      nextGst =
+        stockItems.find((i) => i.id === draft.stockLines[0].itemId)?.gst_rate ??
+        null;
     }
     if (nextGst != null) setGstRate(nextGst);
 
@@ -353,7 +354,7 @@ export function VoucherEditorPage() {
     }
 
     if (draft.stockLines.length > 0 && stockOk) {
-      const defGodown =
+      const defGodown: number | "" =
         godowns.find((g) => g.is_default)?.id || godowns[0]?.id || "";
       setUseStock(true);
       const mapped = draft.stockLines.map((line) => {
@@ -370,7 +371,7 @@ export function VoucherEditorPage() {
         }
         if (rate == null) rate = fallbackRate ?? 0;
         return {
-          itemId: line.itemId ?? "",
+          itemId: (line.itemId ?? "") as number | "",
           godownId: defGodown,
           qty: String(line.qty ?? 1),
           rate: String(rate),

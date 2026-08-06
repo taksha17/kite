@@ -1,12 +1,26 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { formatInr } from "../lib/accounting/engine";
-import { AiOnboardingWizard } from "../components/AiOnboardingWizard";
+import {
+  buildHomeInsightCards,
+  computeLowStock,
+  computePartyBalances,
+  monthBounds,
+  type HomeInsightCard,
+} from "../lib/accounting/homeInsights";
+import { summarizeGstr3b } from "../lib/accounting/gstReports";
 import {
   computeProfitAndLoss,
   type LedgerBalanceInput,
 } from "../lib/accounting/reports";
-import { fetchLedgerBalances, listVouchers } from "../lib/db/client";
+import { AiOnboardingWizard } from "../components/AiOnboardingWizard";
+import {
+  fetchGstInvoices,
+  fetchLedgerBalances,
+  fetchSalesInsightTotals,
+  listVouchers,
+} from "../lib/db/client";
+import { fetchStockSummary } from "../lib/db/inventory";
 import { useApp } from "../state/AppContext";
 
 export function HomePage() {
@@ -14,15 +28,25 @@ export function HomePage() {
   const [voucherCount, setVoucherCount] = useState(0);
   const [netProfit, setNetProfit] = useState(0);
   const [cashBank, setCashBank] = useState(0);
+  const [insights, setInsights] = useState<HomeInsightCard[]>([]);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardDismissed, setWizardDismissed] = useState(false);
 
   useEffect(() => {
     if (!company) return;
     (async () => {
-      const vouchers = await listVouchers(500);
+      const today = new Date().toISOString().slice(0, 10);
+      const bounds = monthBounds(today);
+
+      const [vouchers, balances, sales, gstRows, stockRows] = await Promise.all([
+        listVouchers(500),
+        fetchLedgerBalances(),
+        fetchSalesInsightTotals(bounds),
+        fetchGstInvoices("all").catch(() => []),
+        fetchStockSummary().catch(() => []),
+      ]);
+
       setVoucherCount(vouchers.length);
-      const balances = await fetchLedgerBalances();
       const mapped: LedgerBalanceInput[] = balances.map((b) => ({
         ledgerId: b.ledger_id,
         ledgerName: b.ledger_name,
@@ -48,6 +72,27 @@ export function HomePage() {
           0,
         );
       setCashBank(Math.round(cash * 100) / 100);
+
+      const party = computePartyBalances(mapped);
+      const gstMonth = gstRows.filter(
+        (r) => r.date >= bounds.thisStart && r.date < bounds.nextStart,
+      );
+      const g3 = summarizeGstr3b(gstMonth);
+      const gstNet = Math.round((g3.netCgst + g3.netSgst + g3.netIgst) * 100) / 100;
+      const stock = computeLowStock(stockRows);
+
+      setInsights(
+        buildHomeInsightCards({
+          today,
+          party,
+          gstNetThisMonth: gstNet,
+          salesThisMonth: sales.thisMonth,
+          salesLastMonth: sales.lastMonth,
+          salesOlderThan30: sales.olderThan30,
+          stock,
+          formatInr,
+        }),
+      );
     })();
   }, [company]);
 
@@ -97,6 +142,9 @@ export function HomePage() {
           <Link className="primary btn" to="/vouchers/new">
             New voucher
           </Link>
+          <Link className="secondary btn" to="/ask">
+            Ask
+          </Link>
           <Link className="secondary btn" to="/reports">
             Reports
           </Link>
@@ -117,6 +165,30 @@ export function HomePage() {
           <p className="stat-value">{voucherCount}</p>
         </div>
       </div>
+
+      {insights.length > 0 && (
+        <section style={{ marginBottom: "1.25rem" }}>
+          <div className="row-between" style={{ marginBottom: "0.55rem" }}>
+            <h2 style={{ margin: 0, fontSize: "1.05rem" }}>Insights</h2>
+            <span className="muted small">From your books · not AI guesses</span>
+          </div>
+          <div className="insight-row">
+            {insights.map((card) => (
+              <Link
+                key={card.id}
+                to={card.href}
+                className={`stat insight tone-${card.tone}`}
+              >
+                <p className="muted small">{card.label}</p>
+                <p className="stat-value">{card.value}</p>
+                <p className="muted small" style={{ marginTop: "0.35rem" }}>
+                  {card.detail}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {voucherCount === 0 && !wizardDismissed && !wizardOpen && (
         <section className="panel" style={{ maxWidth: 760 }}>

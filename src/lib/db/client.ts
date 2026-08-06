@@ -835,6 +835,41 @@ export async function listVouchers(limit = 200): Promise<VoucherRow[]> {
   );
 }
 
+/** Sales totals for home insights (this month / last month / older than 30 days). */
+export async function fetchSalesInsightTotals(bounds: {
+  thisStart: string;
+  nextStart: string;
+  prevStart: string;
+  agedBefore: string;
+}): Promise<{
+  thisMonth: number;
+  lastMonth: number;
+  olderThan30: number;
+}> {
+  const db = getActiveCompanyDb();
+  const rows = await db.select<
+    {
+      this_month: number;
+      last_month: number;
+      older_than_30: number;
+    }[]
+  >(
+    `SELECT
+       COALESCE(SUM(CASE WHEN date >= $1 AND date < $2 THEN total_amount ELSE 0 END), 0) as this_month,
+       COALESCE(SUM(CASE WHEN date >= $3 AND date < $1 THEN total_amount ELSE 0 END), 0) as last_month,
+       COALESCE(SUM(CASE WHEN date < $4 THEN total_amount ELSE 0 END), 0) as older_than_30
+     FROM voucher
+     WHERE voucher_type = 'sales'`,
+    [bounds.thisStart, bounds.nextStart, bounds.prevStart, bounds.agedBefore],
+  );
+  const r = rows[0];
+  return {
+    thisMonth: Math.round((Number(r?.this_month) || 0) * 100) / 100,
+    lastMonth: Math.round((Number(r?.last_month) || 0) * 100) / 100,
+    olderThan30: Math.round((Number(r?.older_than_30) || 0) * 100) / 100,
+  };
+}
+
 export async function getVoucherLines(
   voucherId: number,
 ): Promise<VoucherLineRow[]> {

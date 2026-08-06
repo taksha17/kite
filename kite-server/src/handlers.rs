@@ -191,11 +191,7 @@ pub async fn company_ai_chat(
     auth: AuthUser,
     Json(input): Json<AiChatInput>,
 ) -> Result<Json<Value>, ApiError> {
-    crate::ai::validate_prompts(
-        &input.system,
-        &input.user,
-        input.image_data_url.as_deref(),
-    )?;
+    crate::ai::validate_prompts(&input.system, &input.user, input.image_data_url.as_deref())?;
     let pool = state.company_pool(&auth.company_id).await?;
     let row = sqlx::query("SELECT value FROM meta WHERE key = 'ai_settings'")
         .fetch_optional(&pool)

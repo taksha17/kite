@@ -75,6 +75,12 @@ export interface VoucherRow {
   ewb_date: string | null;
   ewb_valid_upto: string | null;
   trans_distance: string | null;
+  irn: string | null;
+  irn_ack_no: string | null;
+  irn_ack_date: string | null;
+  irn_signed_qr: string | null;
+  irn_status: string | null;
+  irn_cancel_date: string | null;
   created_at: string;
   party_name?: string;
 }

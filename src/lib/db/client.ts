@@ -531,7 +531,7 @@ export async function updateLedger(
   );
 }
 
-export async function insertVoucher(input: {
+export interface VoucherInput {
   voucherType: string;
   date: string;
   number?: string;
@@ -571,22 +571,111 @@ export async function insertVoucher(input: {
     freightAmount?: number;
     roundOff?: number;
   };
-}): Promise<number> {
-  const db = getActiveCompanyDb();
-  const ex = input.invoiceExtras;
+}
 
-  if (input.stockItems?.length && input.voucherType === "sales") {
-    const items = await listStockItems();
-    const names = new Map(items.map((i) => [i.id, i.name]));
-    await assertSufficientStock(
-      input.stockItems.map((s) => ({
-        itemId: s.itemId,
-        godownId: s.godownId,
-        qty: s.qty,
-      })),
-      names,
+/** 28-column value list shared by INSERT and UPDATE of the voucher header. */
+function voucherHeaderValues(input: VoucherInput): unknown[] {
+  const ex = input.invoiceExtras;
+  return [
+    input.voucherType,
+    input.date,
+    input.number || null,
+    input.narration || null,
+    input.totalAmount,
+    input.gst?.partyLedgerId ?? null,
+    input.gst?.placeOfSupply ?? null,
+    input.gst?.isInterstate ? 1 : 0,
+    input.gst?.hsnSac ?? null,
+    input.gst?.gstRate ?? null,
+    input.gst?.breakdown.taxableValue ?? null,
+    input.gst?.breakdown.cgst ?? 0,
+    input.gst?.breakdown.sgst ?? 0,
+    input.gst?.breakdown.igst ?? 0,
+    ex?.paymentMode?.trim() || null,
+    ex?.reverseCharge ? 1 : 0,
+    ex?.buyerOrderNo?.trim() || null,
+    ex?.supplierRef?.trim() || null,
+    ex?.vehicleNo?.trim() || null,
+    ex?.deliveryDate?.trim() || null,
+    ex?.transport?.trim() || null,
+    ex?.termsOfDelivery?.trim() || null,
+    ex?.shipToName?.trim() || null,
+    ex?.shipToAddress?.trim() || null,
+    ex?.shipToState?.trim() || null,
+    ex?.shipToGstin?.trim() || null,
+    Number(ex?.freightAmount) || 0,
+    Number(ex?.roundOff) || 0,
+  ];
+}
+
+async function checkSalesStock(
+  input: VoucherInput,
+  restoredOuts?: Map<string, number>,
+): Promise<void> {
+  if (!input.stockItems?.length || input.voucherType !== "sales") return;
+  const items = await listStockItems();
+  const names = new Map(items.map((i) => [i.id, i.name]));
+  await assertSufficientStock(
+    input.stockItems.map((s) => ({
+      itemId: s.itemId,
+      godownId: s.godownId,
+      qty: s.qty,
+    })),
+    names,
+    restoredOuts,
+  );
+}
+
+async function insertVoucherLines(
+  voucherId: number,
+  lines: VoucherInput["lines"],
+): Promise<void> {
+  const db = getActiveCompanyDb();
+  for (const line of lines) {
+    await db.execute(
+      `INSERT INTO voucher_line (voucher_id, ledger_id, debit, credit, line_narration)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        voucherId,
+        line.ledgerId,
+        line.debit,
+        line.credit,
+        line.narration || null,
+      ],
     );
   }
+}
+
+async function applyStockMovements(
+  voucherId: number,
+  input: VoucherInput,
+): Promise<void> {
+  if (!input.stockItems?.length) return;
+  const direction = input.voucherType === "purchase" ? "in" : "out";
+  const movementType =
+    input.voucherType === "purchase" ? "purchase" : "sales";
+  await insertStockMovements({
+    voucherId,
+    date: input.date,
+    lines: input.stockItems.map((s) => ({
+      itemId: s.itemId,
+      godownId: s.godownId,
+      qty: s.qty,
+      rate: s.rate,
+      direction,
+      movementType,
+      narration: input.narration,
+      batchNo: s.batchNo,
+      serialNo: s.serialNo,
+      lineDescription: s.lineDescription,
+    })),
+  });
+}
+
+export async function insertVoucher(input: VoucherInput): Promise<number> {
+  const db = getActiveCompanyDb();
+
+  await checkSalesStock(input);
 
   // Use the INSERT's own rowid — under concurrent users a follow-up
   // "SELECT id ... DESC LIMIT 1" could return another user's voucher.
@@ -603,74 +692,13 @@ export async function insertVoucher(input: {
       $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
       $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28
     )`,
-    [
-      input.voucherType,
-      input.date,
-      input.number || null,
-      input.narration || null,
-      input.totalAmount,
-      input.gst?.partyLedgerId ?? null,
-      input.gst?.placeOfSupply ?? null,
-      input.gst?.isInterstate ? 1 : 0,
-      input.gst?.hsnSac ?? null,
-      input.gst?.gstRate ?? null,
-      input.gst?.breakdown.taxableValue ?? null,
-      input.gst?.breakdown.cgst ?? 0,
-      input.gst?.breakdown.sgst ?? 0,
-      input.gst?.breakdown.igst ?? 0,
-      ex?.paymentMode?.trim() || null,
-      ex?.reverseCharge ? 1 : 0,
-      ex?.buyerOrderNo?.trim() || null,
-      ex?.supplierRef?.trim() || null,
-      ex?.vehicleNo?.trim() || null,
-      ex?.deliveryDate?.trim() || null,
-      ex?.transport?.trim() || null,
-      ex?.termsOfDelivery?.trim() || null,
-      ex?.shipToName?.trim() || null,
-      ex?.shipToAddress?.trim() || null,
-      ex?.shipToState?.trim() || null,
-      ex?.shipToGstin?.trim() || null,
-      Number(ex?.freightAmount) || 0,
-      Number(ex?.roundOff) || 0,
-    ],
+    voucherHeaderValues(input),
   );
   const voucherId = inserted.lastInsertId ?? 0;
   if (!voucherId) throw new Error("Could not save the voucher. Please retry.");
-  for (const line of input.lines) {
-    await db.execute(
-      `INSERT INTO voucher_line (voucher_id, ledger_id, debit, credit, line_narration)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [
-        voucherId,
-        line.ledgerId,
-        line.debit,
-        line.credit,
-        line.narration || null,
-      ],
-    );
-  }
 
-  if (input.stockItems?.length) {
-    const direction = input.voucherType === "purchase" ? "in" : "out";
-    const movementType =
-      input.voucherType === "purchase" ? "purchase" : "sales";
-    await insertStockMovements({
-      voucherId,
-      date: input.date,
-      lines: input.stockItems.map((s) => ({
-        itemId: s.itemId,
-        godownId: s.godownId,
-        qty: s.qty,
-        rate: s.rate,
-        direction,
-        movementType,
-        narration: input.narration,
-        batchNo: s.batchNo,
-        serialNo: s.serialNo,
-        lineDescription: s.lineDescription,
-      })),
-    });
-  }
+  await insertVoucherLines(voucherId, input.lines);
+  await applyStockMovements(voucherId, input);
 
   try {
     await writeAudit({
@@ -685,6 +713,98 @@ export async function insertVoucher(input: {
   }
 
   return voucherId;
+}
+
+export async function getVoucherById(
+  voucherId: number,
+): Promise<VoucherRow | null> {
+  const db = getActiveCompanyDb();
+  const rows = await db.select<VoucherRow[]>(
+    "SELECT * FROM voucher WHERE id = $1",
+    [voucherId],
+  );
+  return rows[0] ?? null;
+}
+
+/**
+ * Replace a posted voucher's header, accounting lines, and stock movements.
+ * Registered documents lock the record: an active IRN or e-way bill must be
+ * cancelled on the portal before the invoice can be edited.
+ */
+export async function updateVoucher(
+  voucherId: number,
+  input: VoucherInput,
+): Promise<void> {
+  const db = getActiveCompanyDb();
+  const existing = await getVoucherById(voucherId);
+  if (!existing) throw new Error("Voucher not found.");
+  if (existing.voucher_type !== input.voucherType) {
+    throw new Error("Voucher type cannot change when editing.");
+  }
+  if (existing.irn && existing.irn_status !== "CNL") {
+    throw new Error(
+      "This invoice has an active e-invoice IRN. Cancel the IRN first (invoice page → e-Invoice), then edit.",
+    );
+  }
+  if (existing.ewb_no) {
+    throw new Error(
+      "This invoice has e-way bill " +
+        existing.ewb_no +
+        ". Cancel it on the NIC portal before editing the invoice.",
+    );
+  }
+
+  // When re-posting a sales voucher, the quantities its old movements took
+  // out become available again — count them before deleting the movements.
+  let restoredOuts: Map<string, number> | undefined;
+  if (input.stockItems?.length && input.voucherType === "sales") {
+    const old = await db.select<
+      { item_id: number; godown_id: number; q: number }[]
+    >(
+      `SELECT item_id, godown_id, SUM(qty_out) as q
+       FROM stock_movement WHERE voucher_id = $1 GROUP BY item_id, godown_id`,
+      [voucherId],
+    );
+    restoredOuts = new Map(
+      old.map((r) => [`${r.item_id}:${r.godown_id}`, Number(r.q) || 0]),
+    );
+  }
+  await checkSalesStock(input, restoredOuts);
+
+  await db.execute(
+    `UPDATE voucher SET
+      voucher_type = $1, date = $2, number = $3, narration = $4, total_amount = $5,
+      party_ledger_id = $6, place_of_supply = $7, is_interstate = $8, hsn_sac = $9, gst_rate = $10,
+      taxable_value = $11, cgst_amount = $12, sgst_amount = $13, igst_amount = $14,
+      payment_mode = $15, reverse_charge = $16, buyer_order_no = $17, supplier_ref = $18,
+      vehicle_no = $19, delivery_date = $20, transport = $21, terms_of_delivery = $22,
+      ship_to_name = $23, ship_to_address = $24, ship_to_state = $25, ship_to_gstin = $26,
+      freight_amount = $27, round_off = $28
+     WHERE id = $29`,
+    [...voucherHeaderValues(input), voucherId],
+  );
+
+  await db.execute("DELETE FROM voucher_line WHERE voucher_id = $1", [
+    voucherId,
+  ]);
+  await insertVoucherLines(voucherId, input.lines);
+
+  await db.execute("DELETE FROM stock_movement WHERE voucher_id = $1", [
+    voucherId,
+  ]);
+  await applyStockMovements(voucherId, input);
+
+  try {
+    await writeAudit({
+      user: getCurrentUser(),
+      action: "update",
+      entityType: "voucher",
+      entityId: voucherId,
+      detail: `${input.voucherType} · ${input.date} · ${input.totalAmount}`,
+    });
+  } catch {
+    // audit should not block posting
+  }
 }
 
 export async function listVouchers(limit = 200): Promise<VoucherRow[]> {

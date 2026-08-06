@@ -65,7 +65,7 @@ company setup to GST invoice to Excel export.
 - **e-Invoicing (IRN):** register B2B invoices with the government IRP from the desktop app — IRN + signed QR printed on the invoice PDF, cancel-IRN support, free direct NIC API (no GSP fees), sandbox/production presets
 - **AI quick entry (optional, BYOK):** describe a voucher in one sentence and OpenAI/Anthropic/Gemini drafts it into the form for review — the AI can only draft, never post; keys stay server-side on Team, in-app on Solo
 - Reports: Day Book, Ledger, Trial Balance, Profit & Loss, Balance Sheet
-- Balanced double-entry validation before save
+- Balanced double-entry validation before save; posted vouchers can be edited in place (locked while an IRN/e-way bill is active)
 
 ## Quick start
 

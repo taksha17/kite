@@ -232,6 +232,17 @@ export function InvoicePage() {
           <Link className="ghost btn" to="/vouchers">
             Back
           </Link>
+          <Link
+            className="ghost btn"
+            to={`/vouchers/${data.voucherId}/edit`}
+            title={
+              (data.irn && data.irnStatus !== "CNL") || data.ewbNo
+                ? "Locked — cancel the IRN/e-way bill first"
+                : "Edit this voucher"
+            }
+          >
+            Edit
+          </Link>
           <button type="button" className="secondary" onClick={onPrint}>
             Print invoice
           </button>

@@ -262,16 +262,40 @@ export async function getItemQty(
 export async function assertSufficientStock(
   lines: { itemId: number; godownId: number; qty: number }[],
   itemNames: Map<number, string>,
+  restoredOuts?: Map<string, number>,
 ): Promise<void> {
   for (const line of lines) {
     const onHand = await getItemQty(line.itemId, line.godownId);
-    if (line.qty > onHand + 1e-9) {
+    const restored =
+      restoredOuts?.get(`${line.itemId}:${line.godownId}`) || 0;
+    if (line.qty > onHand + restored + 1e-9) {
       const name = itemNames.get(line.itemId) || `#${line.itemId}`;
       throw new Error(
-        `Insufficient stock for ${name}: need ${line.qty}, have ${onHand}.`,
+        `Insufficient stock for ${name}: need ${line.qty}, have ${onHand + restored}.`,
       );
     }
   }
+}
+
+/** Stock movement rows belonging to one voucher, for the editor's edit mode. */
+export async function getVoucherStockMovements(voucherId: number): Promise<
+  {
+    item_id: number;
+    godown_id: number;
+    qty_in: number;
+    qty_out: number;
+    rate: number;
+    batch_no: string | null;
+    serial_no: string | null;
+    line_description: string | null;
+  }[]
+> {
+  const db = getActiveCompanyDb();
+  return db.select(
+    `SELECT item_id, godown_id, qty_in, qty_out, rate, batch_no, serial_no, line_description
+     FROM stock_movement WHERE voucher_id = $1 ORDER BY id`,
+    [voucherId],
+  );
 }
 
 export async function insertStockMovements(input: {

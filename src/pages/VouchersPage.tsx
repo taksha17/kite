@@ -69,11 +69,27 @@ export function VouchersPage() {
                   <td>{v.narration || "—"}</td>
                   <td className="num">{formatInr(v.total_amount)}</td>
                   <td>
-                    {v.voucher_type === "sales" && (
-                      <Link className="ghost btn" to={`/vouchers/${v.id}/invoice`}>
-                        Invoice
+                    <span style={{ display: "inline-flex", gap: "0.35rem" }}>
+                      {v.voucher_type === "sales" && (
+                        <Link
+                          className="ghost btn"
+                          to={`/vouchers/${v.id}/invoice`}
+                        >
+                          Invoice
+                        </Link>
+                      )}
+                      <Link
+                        className="ghost btn"
+                        to={`/vouchers/${v.id}/edit`}
+                        title={
+                          (v.irn && v.irn_status !== "CNL") || v.ewb_no
+                            ? "Locked — cancel the IRN/e-way bill first"
+                            : "Edit this voucher"
+                        }
+                      >
+                        Edit
                       </Link>
-                    )}
+                    </span>
                   </td>
                 </tr>
               ))}

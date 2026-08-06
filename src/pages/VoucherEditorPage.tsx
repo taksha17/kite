@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent, Fragment } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { formatInr, sumLines, validateVoucher } from "../lib/accounting/engine";
 import {
   buildGstAccountingLines,
@@ -14,11 +14,15 @@ import {
 } from "../lib/inventory/calc";
 import {
   findLedgerByName,
+  getVoucherById,
+  getVoucherLines,
   insertVoucher,
   listLedgers,
+  updateVoucher,
   type LedgerRow,
 } from "../lib/db/client";
 import {
+  getVoucherStockMovements,
   listGodowns,
   listStockItems,
   type GodownRow,
@@ -68,8 +72,12 @@ function emptyStock(godownId: number | "" = ""): StockDraft {
 export function VoucherEditorPage() {
   const { company, allowed } = useApp();
   const [params] = useSearchParams();
+  const { id } = useParams();
+  const editId = id ? Number(id) : null;
   const navigate = useNavigate();
   const [ledgers, setLedgers] = useState<LedgerRow[]>([]);
+  const [editLock, setEditLock] = useState<string | null>(null);
+  const [editLoaded, setEditLoaded] = useState(false);
   const [voucherType, setVoucherType] = useState<VoucherTypeCode>(
     (params.get("type") as VoucherTypeCode) || "journal",
   );
@@ -143,6 +151,95 @@ export function VoucherEditorPage() {
       void getAiSettings().then((s) => setAiReady(aiConfigured(s)));
     }
   }, [company]);
+
+  // Edit mode: load the posted voucher (header + lines + stock) into the form.
+  useEffect(() => {
+    if (!company || !editId) return;
+    void (async () => {
+      try {
+        const v = await getVoucherById(editId);
+        if (!v) throw new Error("Voucher not found.");
+        const t = v.voucher_type as VoucherTypeCode;
+        setVoucherType(t);
+        setDate(v.date);
+        setNumber(v.number || "");
+        setNarration(v.narration || "");
+        if (v.irn && v.irn_status !== "CNL") {
+          setEditLock(
+            "This invoice has an active e-invoice IRN — cancel the IRN on the invoice page before editing.",
+          );
+        } else if (v.ewb_no) {
+          setEditLock(
+            `This invoice has e-way bill ${v.ewb_no} — cancel it on the NIC portal before editing.`,
+          );
+        }
+        if (v.party_ledger_id) setPartyId(v.party_ledger_id);
+        if (v.place_of_supply) setPlaceOfSupply(v.place_of_supply);
+        if (v.hsn_sac) setHsn(v.hsn_sac);
+        if (v.gst_rate != null) setGstRate(v.gst_rate);
+        if (v.taxable_value != null) setTaxable(String(v.taxable_value));
+        setPaymentMode(v.payment_mode || "");
+        setReverseCharge(Boolean(v.reverse_charge));
+        setBuyerOrderNo(v.buyer_order_no || "");
+        setSupplierRef(v.supplier_ref || "");
+        setVehicleNo(v.vehicle_no || "");
+        setDeliveryDate(v.delivery_date || "");
+        setTransport(v.transport || "");
+        setTermsOfDelivery(v.terms_of_delivery || "");
+        setShipToName(v.ship_to_name || "");
+        setShipToAddress(v.ship_to_address || "");
+        setShipToState(v.ship_to_state || "");
+        setShipToGstin(v.ship_to_gstin || "");
+        if (Number(v.freight_amount)) setFreightAmount(String(v.freight_amount));
+        if (Number(v.round_off)) setRoundOff(String(v.round_off));
+        setShowInvoiceExtras(
+          Boolean(
+            v.payment_mode ||
+              v.buyer_order_no ||
+              v.vehicle_no ||
+              v.ship_to_name ||
+              Number(v.freight_amount) ||
+              Number(v.round_off),
+          ),
+        );
+
+        const vl = await getVoucherLines(editId);
+        if (!v.party_ledger_id && vl.length > 0) {
+          setLines(
+            vl.map((l) => ({
+              ledgerId: l.ledger_id,
+              debit: l.debit,
+              credit: l.credit,
+              narration: l.line_narration || undefined,
+            })),
+          );
+        }
+
+        const moves = await getVoucherStockMovements(editId);
+        if (moves.length > 0) {
+          setUseStock(true);
+          setStockLines(
+            moves.map((m) => ({
+              itemId: m.item_id,
+              godownId: m.godown_id,
+              qty: String(
+                t === "purchase" ? m.qty_in : m.qty_out,
+              ),
+              rate: String(m.rate),
+              batchNo: m.batch_no || "",
+              serialNo: m.serial_no || "",
+              lineDescription: m.line_description || "",
+            })),
+          );
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setEditLoaded(true);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [company, editId]);
 
   useEffect(() => {
     const party = ledgers.find((l) => l.id === Number(partyId));
@@ -350,7 +447,7 @@ export function VoucherEditorPage() {
         if (!result.ok) throw new Error(result.error);
 
         setBusy(true);
-        const voucherId = await insertVoucher({
+        const payload = {
           voucherType,
           date,
           number: number || undefined,
@@ -385,9 +482,12 @@ export function VoucherEditorPage() {
                   roundOff: Number(roundOff) || 0,
                 }
               : undefined,
-        });
+        };
+        const voucherId = editId
+          ? await updateVoucher(editId, payload).then(() => editId)
+          : await insertVoucher(payload);
         if (voucherType === "sales") {
-          navigate(`/vouchers/${voucherId}/invoice?send=1`);
+          navigate(`/vouchers/${voucherId}/invoice${editId ? "" : "?send=1"}`);
         } else {
           navigate("/vouchers");
         }
@@ -407,14 +507,19 @@ export function VoucherEditorPage() {
         return;
       }
       setBusy(true);
-      await insertVoucher({
+      const payload = {
         voucherType,
         date,
         number: number || undefined,
         narration: narration || undefined,
         totalAmount: result.totalDebit,
         lines: draft.lines,
-      });
+      };
+      if (editId) {
+        await updateVoucher(editId, payload);
+      } else {
+        await insertVoucher(payload);
+      }
       navigate("/vouchers");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -445,11 +550,13 @@ export function VoucherEditorPage() {
     <div className="page">
       <header className="page-header">
         <div>
-          <h1>New voucher</h1>
+          <h1>{editId ? `Edit voucher #${editId}` : "New voucher"}</h1>
           <p className="lede">
-            {isGstVoucher
-              ? "GST invoice — tax splits auto-post to CGST/SGST or IGST."
-              : "Debits must equal credits before save."}
+            {editId
+              ? "Re-posts the voucher with your changes; lines and stock movements are replaced."
+              : isGstVoucher
+                ? "GST invoice — tax splits auto-post to CGST/SGST or IGST."
+                : "Debits must equal credits before save."}
           </p>
         </div>
         <Link className="ghost btn" to="/vouchers">
@@ -457,7 +564,16 @@ export function VoucherEditorPage() {
         </Link>
       </header>
 
-      {aiReady && (
+      {editLock && (
+        <p className="error" role="alert">
+          {editLock}
+        </p>
+      )}
+      {editId && !editLoaded && !error && (
+        <p className="muted">Loading voucher…</p>
+      )}
+
+      {aiReady && !editId && (
         <section className="panel" style={{ marginBottom: "1rem" }}>
           <h2 style={{ marginTop: 0 }}>AI quick entry</h2>
           <p className="muted small">
@@ -511,6 +627,7 @@ export function VoucherEditorPage() {
             Type
             <select
               value={voucherType}
+              disabled={Boolean(editId)}
               onChange={(e) =>
                 setVoucherType(e.target.value as VoucherTypeCode)
               }
@@ -1281,8 +1398,16 @@ export function VoucherEditorPage() {
         {error && <p className="error">{error}</p>}
 
         <div className="cta-row" style={{ marginTop: "1rem" }}>
-          <button className="primary" type="submit" disabled={busy}>
-            {busy ? "Saving…" : "Accept voucher"}
+          <button
+            className="primary"
+            type="submit"
+            disabled={busy || Boolean(editLock) || Boolean(editId && !editLoaded)}
+          >
+            {busy
+              ? "Saving…"
+              : editId
+                ? "Save changes"
+                : "Accept voucher"}
           </button>
         </div>
       </form>

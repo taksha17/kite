@@ -25,8 +25,9 @@ export default function App() {
             <Route path="ledgers" element={<LedgersPage />} />
             <Route path="inventory" element={<InventoryPage />} />
             <Route path="vouchers" element={<VouchersPage />} />
-            <Route path="vouchers/new" element={<VoucherEditorPage />} />
-            <Route path="vouchers/:id/invoice" element={<InvoicePage />} />
+          <Route path="vouchers/new" element={<VoucherEditorPage />} />
+          <Route path="vouchers/:id/edit" element={<VoucherEditorPage />} />
+          <Route path="vouchers/:id/invoice" element={<InvoicePage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />

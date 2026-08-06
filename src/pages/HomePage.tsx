@@ -21,6 +21,10 @@ import {
   listVouchers,
 } from "../lib/db/client";
 import { fetchStockSummary } from "../lib/db/inventory";
+import {
+  fetchOpenSalesInvoices,
+  sumOpenOlderThan,
+} from "../lib/ar/openInvoices";
 import { useApp } from "../state/AppContext";
 
 export function HomePage() {
@@ -38,13 +42,15 @@ export function HomePage() {
       const today = new Date().toISOString().slice(0, 10);
       const bounds = monthBounds(today);
 
-      const [vouchers, balances, sales, gstRows, stockRows] = await Promise.all([
-        listVouchers(500),
-        fetchLedgerBalances(),
-        fetchSalesInsightTotals(bounds),
-        fetchGstInvoices("all").catch(() => []),
-        fetchStockSummary().catch(() => []),
-      ]);
+      const [vouchers, balances, sales, gstRows, stockRows, openInvoices] =
+        await Promise.all([
+          listVouchers(500),
+          fetchLedgerBalances(),
+          fetchSalesInsightTotals(bounds),
+          fetchGstInvoices("all").catch(() => []),
+          fetchStockSummary().catch(() => []),
+          fetchOpenSalesInvoices().catch(() => []),
+        ]);
 
       setVoucherCount(vouchers.length);
       const mapped: LedgerBalanceInput[] = balances.map((b) => ({
@@ -88,7 +94,7 @@ export function HomePage() {
           gstNetThisMonth: gstNet,
           salesThisMonth: sales.thisMonth,
           salesLastMonth: sales.lastMonth,
-          salesOlderThan30: sales.olderThan30,
+          salesOlderThan30: sumOpenOlderThan(openInvoices, bounds.agedBefore),
           stock,
           formatInr,
         }),

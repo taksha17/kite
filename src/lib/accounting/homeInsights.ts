@@ -223,11 +223,11 @@ export function buildHomeInsightCards(
   if (salesOlderThan30 > 0.005) {
     cards.push({
       id: "aged",
-      label: "Sales older than 30 days",
+      label: "Open AR older than 30 days",
       value: formatInr(salesOlderThan30),
-      detail: "By invoice date — not true overdue (no due dates yet)",
+      detail: "Unpaid invoices (FIFO) older than 30 days",
       tone: "warn",
-      href: "/ask?q=" + encodeURIComponent("Which customers still owe me?"),
+      href: "/follow-up",
     });
   }
 

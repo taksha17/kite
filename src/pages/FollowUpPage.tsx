@@ -11,10 +11,13 @@ import {
   type ReminderDraft,
 } from "../lib/ar/followUp";
 import {
-  fetchLastSaleDatesByParty,
   fetchLedgerBalances,
   listLedgers,
 } from "../lib/db/client";
+import {
+  fetchOpenSalesInvoices,
+  oldestOpenByParty,
+} from "../lib/ar/openInvoices";
 import { useApp } from "../state/AppContext";
 
 export function FollowUpPage() {
@@ -33,10 +36,10 @@ export function FollowUpPage() {
     (async () => {
       try {
         const today = new Date().toISOString().slice(0, 10);
-        const [balances, ledgers, lastSales] = await Promise.all([
+        const [balances, ledgers, opens] = await Promise.all([
           fetchLedgerBalances(),
           listLedgers(),
-          fetchLastSaleDatesByParty(),
+          fetchOpenSalesInvoices(),
         ]);
         const mapped: LedgerBalanceInput[] = balances.map((b) => ({
           ledgerId: b.ledger_id,
@@ -51,7 +54,7 @@ export function FollowUpPage() {
         const list = buildFollowUpTargets(
           mapped,
           ledgers,
-          lastSales,
+          oldestOpenByParty(opens),
           today,
         );
         setTargets(list);
@@ -79,7 +82,8 @@ export function FollowUpPage() {
         companyName: company.name,
         partyName: selected.name,
         amount: selected.amount,
-        daysSinceSale: selected.daysSinceSale,
+        daysOverdue: selected.daysOverdue,
+        oldestOpenNumber: selected.oldestOpenNumber,
       }),
     );
     setCopied(false);
@@ -173,8 +177,8 @@ export function FollowUpPage() {
                       </td>
                       <td className="num">{formatInr(t.amount)}</td>
                       <td className="muted small">
-                        {t.daysSinceSale != null
-                          ? `${t.daysSinceSale}d since sale`
+                        {t.daysOverdue != null
+                          ? `${t.daysOverdue}d overdue${t.oldestOpenNumber ? ` · ${t.oldestOpenNumber}` : ""}`
                           : "—"}
                       </td>
                     </tr>

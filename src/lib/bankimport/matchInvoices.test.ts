@@ -10,6 +10,7 @@ const INVOICES: OpenInvoice[] = [
     number: "INV-45",
     date: "2026-07-01",
     totalAmount: 10000,
+    openAmount: 10000,
     partyLedgerId: 10,
     partyName: "Acme Traders",
   },
@@ -18,6 +19,7 @@ const INVOICES: OpenInvoice[] = [
     number: "INV-46",
     date: "2026-07-10",
     totalAmount: 10000,
+    openAmount: 10000,
     partyLedgerId: 11,
     partyName: "Shree Ganesh Stores",
   },
@@ -26,6 +28,7 @@ const INVOICES: OpenInvoice[] = [
     number: "S-99",
     date: "2026-01-01",
     totalAmount: 5000,
+    openAmount: 5000,
     partyLedgerId: 10,
     partyName: "Acme Traders",
   },
@@ -89,5 +92,20 @@ describe("matchDepositToInvoice", () => {
       used,
     );
     expect(m?.id).toBe(1);
+  });
+
+  it("matches against remaining open amount after partial payment", () => {
+    const used = new Set<number>();
+    const partial: OpenInvoice = {
+      ...INVOICES[0],
+      openAmount: 4000,
+    };
+    expect(
+      matchDepositToInvoice(10000, "ACME TRADERS", "2026-07-12", [partial], used),
+    ).toBeNull();
+    expect(
+      matchDepositToInvoice(4000, "ACME TRADERS", "2026-07-12", [partial], used)
+        ?.id,
+    ).toBe(1);
   });
 });

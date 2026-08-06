@@ -9,8 +9,10 @@ export interface FollowUpTarget {
   amount: number;
   email: string | null;
   phone: string | null;
-  lastSaleDate: string | null;
-  daysSinceSale: number | null;
+  /** Oldest unpaid invoice date (FIFO open AR). */
+  oldestOpenDate: string | null;
+  daysOverdue: number | null;
+  oldestOpenNumber: string | null;
 }
 
 export interface ReminderDraft {
@@ -37,13 +39,16 @@ export function daysBetween(fromIso: string, toIso: string): number {
 }
 
 /**
- * Open Sundry Debtor balances joined with contact + last sale date.
+ * Open Sundry Debtor balances joined with contact + oldest unpaid invoice.
  * Sorted largest balance first.
  */
 export function buildFollowUpTargets(
   balances: LedgerBalanceInput[],
   ledgers: LedgerRow[],
-  lastSaleByParty: Map<number, string>,
+  oldestOpen: Map<
+    number,
+    { date: string; openAmount: number; number: string | null }
+  >,
   today: string,
 ): FollowUpTarget[] {
   const byId = new Map(ledgers.map((l) => [l.id, l]));
@@ -54,15 +59,16 @@ export function buildFollowUpTargets(
     const net = closingNetDr(b);
     if (net <= 0.005) continue;
     const ledger = byId.get(b.ledgerId);
-    const lastSaleDate = lastSaleByParty.get(b.ledgerId) || null;
+    const open = oldestOpen.get(b.ledgerId) || null;
     out.push({
       ledgerId: b.ledgerId,
       name: b.ledgerName,
       amount: Math.round(net * 100) / 100,
       email: ledger?.email || null,
       phone: ledger?.phone || null,
-      lastSaleDate,
-      daysSinceSale: lastSaleDate ? daysBetween(lastSaleDate, today) : null,
+      oldestOpenDate: open?.date || null,
+      daysOverdue: open ? daysBetween(open.date, today) : null,
+      oldestOpenNumber: open?.number || null,
     });
   }
 
@@ -74,13 +80,18 @@ export function draftPaymentReminder(input: {
   companyName: string;
   partyName: string;
   amount: number;
-  daysSinceSale: number | null;
+  daysOverdue: number | null;
+  oldestOpenNumber?: string | null;
 }): ReminderDraft {
   const amt = formatInr(input.amount);
-  const age =
-    input.daysSinceSale != null && input.daysSinceSale > 0
-      ? ` (last invoice about ${input.daysSinceSale} day${input.daysSinceSale === 1 ? "" : "s"} ago)`
+  const inv =
+    input.oldestOpenNumber && input.oldestOpenNumber.trim()
+      ? ` (oldest open invoice ${input.oldestOpenNumber.trim()})`
       : "";
+  const age =
+    input.daysOverdue != null && input.daysOverdue > 0
+      ? ` — oldest unpaid bill is about ${input.daysOverdue} day${input.daysOverdue === 1 ? "" : "s"} old${inv}`
+      : inv;
 
   const subject = `Payment reminder — ${amt} outstanding`;
   const body = [

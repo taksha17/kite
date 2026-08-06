@@ -169,9 +169,13 @@ export function BankImportPage() {
             matchedInvoiceLabel = inv.number
               ? `Inv ${inv.number}`
               : `Sale #${inv.id}`;
+            const openNote =
+              Math.abs(inv.openAmount - inv.totalAmount) > 0.005
+                ? ` · open ₹${inv.openAmount.toLocaleString("en-IN")}`
+                : "";
             sugg.set(
               hash,
-              `invoice · ${inv.partyName}${inv.number ? ` · ${inv.number}` : ""}`,
+              `invoice · ${inv.partyName}${inv.number ? ` · ${inv.number}` : ""}${openNote}`,
             );
           }
         }

@@ -90,6 +90,7 @@ export async function importRows(
         narration,
         totalAmount: amount,
         lines,
+        partyLedgerId: row.ledgerId,
         external: { source: BANK_IMPORT_SOURCE, id: row.hash },
       });
       summary.posted++;

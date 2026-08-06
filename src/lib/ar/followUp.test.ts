@@ -71,13 +71,16 @@ describe("buildFollowUpTargets", () => {
         ledger(2, "Small"),
         ledger(3, "Cleared"),
       ],
-      new Map([[1, "2026-06-01"]]),
+      new Map([
+        [1, { date: "2026-06-01", openAmount: 5000, number: "INV-1" }],
+      ]),
       "2026-08-06",
     );
     expect(targets).toHaveLength(2);
     expect(targets[0].name).toBe("Agarwal");
     expect(targets[0].amount).toBe(5000);
-    expect(targets[0].daysSinceSale).toBe(daysBetween("2026-06-01", "2026-08-06"));
+    expect(targets[0].daysOverdue).toBe(daysBetween("2026-06-01", "2026-08-06"));
+    expect(targets[0].oldestOpenNumber).toBe("INV-1");
     expect(targets[0].email).toBe("a@x.com");
   });
 });
@@ -88,12 +91,14 @@ describe("draftPaymentReminder", () => {
       companyName: "Kite Demo",
       partyName: "Agarwal",
       amount: 1500,
-      daysSinceSale: 40,
+      daysOverdue: 40,
+      oldestOpenNumber: "INV-9",
     });
     expect(d.subject).toMatch(/outstanding/i);
     expect(d.body).toContain("Kite Demo");
     expect(d.body).toContain("Agarwal");
     expect(d.whatsappText).toContain("40");
+    expect(d.body).toContain("INV-9");
   });
 });
 
@@ -103,7 +108,7 @@ describe("mailto / whatsapp hrefs", () => {
       companyName: "Co",
       partyName: "P",
       amount: 100,
-      daysSinceSale: null,
+      daysOverdue: null,
     });
     expect(mailtoHref("a@b.com", d)).toMatch(/^mailto:/);
     expect(whatsappHref("9876543210", d)).toMatch(/^https:\/\/wa\.me\/919876543210/);

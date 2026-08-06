@@ -547,6 +547,8 @@ export interface VoucherInput {
   narration?: string;
   totalAmount: number;
   lines: { ledgerId: number; debit: number; credit: number; narration?: string }[];
+  /** Party on the voucher header (receipts/payments without GST block). */
+  partyLedgerId?: number;
   gst?: {
     partyLedgerId: number;
     placeOfSupply: string;
@@ -593,7 +595,7 @@ function voucherHeaderValues(input: VoucherInput): unknown[] {
     input.number || null,
     input.narration || null,
     input.totalAmount,
-    input.gst?.partyLedgerId ?? null,
+    input.gst?.partyLedgerId ?? input.partyLedgerId ?? null,
     input.gst?.placeOfSupply ?? null,
     input.gst?.isInterstate ? 1 : 0,
     input.gst?.hsnSac ?? null,

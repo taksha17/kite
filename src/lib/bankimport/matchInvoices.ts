@@ -1,46 +1,43 @@
-import { getActiveCompanyDb } from "../db/active";
 import { normalizeNarration } from "./rules";
+import {
+  fetchOpenSalesInvoices,
+  type OpenSalesInvoice,
+} from "../ar/openInvoices";
 
+/** Bank-match view of an unpaid (or partially paid) sales invoice. */
 export interface OpenInvoice {
   id: number;
   number: string | null;
   date: string;
+  /** Original invoice total. */
   totalAmount: number;
+  /** Remaining unpaid after FIFO receipts. */
+  openAmount: number;
   partyLedgerId: number;
   partyName: string;
 }
 
-/** Recent sales with a party — candidates for deposit matching. */
+/** Unpaid sales after FIFO allocation — candidates for deposit matching. */
 export async function fetchRecentSalesInvoices(
-  limit = 200,
+  _limit = 200,
 ): Promise<OpenInvoice[]> {
-  const db = getActiveCompanyDb();
-  const rows = await db.select<
-    {
-      id: number;
-      number: string | null;
-      date: string;
-      total_amount: number;
-      party_ledger_id: number;
-      party_name: string | null;
-    }[]
-  >(
-    `SELECT v.id, v.number, v.date, v.total_amount, v.party_ledger_id, p.name as party_name
-     FROM voucher v
-     LEFT JOIN ledger p ON p.id = v.party_ledger_id
-     WHERE v.voucher_type = 'sales' AND v.party_ledger_id IS NOT NULL
-     ORDER BY v.date DESC, v.id DESC
-     LIMIT $1`,
-    [limit],
-  );
-  return rows.map((r) => ({
-    id: r.id,
-    number: r.number,
-    date: r.date,
-    totalAmount: Number(r.total_amount) || 0,
-    partyLedgerId: r.party_ledger_id,
-    partyName: r.party_name || "Party",
-  }));
+  const opens = await fetchOpenSalesInvoices();
+  // Newest first for matching preference when scores tie on recency.
+  return opens
+    .map((inv) => toOpenInvoice(inv))
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id));
+}
+
+function toOpenInvoice(inv: OpenSalesInvoice): OpenInvoice {
+  return {
+    id: inv.id,
+    number: inv.number,
+    date: inv.date,
+    totalAmount: inv.totalAmount,
+    openAmount: inv.openAmount,
+    partyLedgerId: inv.partyLedgerId,
+    partyName: inv.partyName,
+  };
 }
 
 function amountsClose(a: number, b: number): boolean {
@@ -54,8 +51,8 @@ function daysBetween(a: string, b: string): number {
 }
 
 /**
- * Match a bank deposit to an open sales invoice by amount (+ optional
- * party/invoice hints in the narration). Each invoice can only be claimed once.
+ * Match a bank deposit to an open sales invoice by remaining open amount
+ * (+ optional party/invoice hints). Each invoice can only be claimed once.
  */
 export function matchDepositToInvoice(
   deposit: number,
@@ -73,7 +70,9 @@ export function matchDepositToInvoice(
 
   for (const inv of invoices) {
     if (usedInvoiceIds.has(inv.id)) continue;
-    if (!amountsClose(deposit, inv.totalAmount)) continue;
+    const open = inv.openAmount > 0 ? inv.openAmount : inv.totalAmount;
+    if (open <= 0.005) continue;
+    if (!amountsClose(deposit, open)) continue;
     // Deposit should not precede the invoice by more than a day.
     if (date < inv.date && daysBetween(date, inv.date) > 1) continue;
     if (daysBetween(date, inv.date) > 120) continue;

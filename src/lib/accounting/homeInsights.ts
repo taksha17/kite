@@ -168,7 +168,7 @@ export function buildHomeInsightCards(
         ? `${party.debtorCount} customer${party.debtorCount === 1 ? "" : "s"} with balance`
         : "No open customer balances",
     tone: party.receivables > 0 ? "warn" : "neutral",
-    href: "/reports",
+    href: "/follow-up",
   });
 
   cards.push({

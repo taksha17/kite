@@ -11,6 +11,7 @@ const links = [
   { to: "/vouchers", label: "Vouchers" },
   { to: "/bank-import", label: "Bank import" },
   { to: "/ask", label: "Ask" },
+  { to: "/follow-up", label: "Follow-up" },
   { to: "/reports", label: "Reports" },
   { to: "/integrations", label: "Integrations" },
   { to: "/users", label: "Users" },

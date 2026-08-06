@@ -389,6 +389,9 @@ button:focus-visible, .btn:focus-visible, .nav-link:focus-visible {
 
 .table tbody tr { transition: background 0.12s ease; }
 .table tbody tr:hover { background: rgba(200, 235, 240, 0.28); }
+.table tbody tr.row-selected td {
+  background: color-mix(in srgb, var(--accent, #0f766e) 12%, transparent);
+}
 
 .num, .num-input { text-align: right; }
 .num-input { width: 100%; }

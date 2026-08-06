@@ -242,6 +242,9 @@ export function HomePage() {
           <Link className="secondary btn" to="/vouchers/new?type=receipt">
             Receipt
           </Link>
+          <Link className="secondary btn" to="/follow-up">
+            Follow-up
+          </Link>
           <Link className="secondary btn" to="/ask">
             Ask my books
           </Link>

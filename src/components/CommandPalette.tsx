@@ -61,6 +61,7 @@ export function CommandPalette() {
       { id: "vouchers", label: "Vouchers", hint: "day book", keywords: "vouchers list daybook entries", run: () => navigate("/vouchers") },
       { id: "bank", label: "Bank import", hint: "statement to vouchers", keywords: "bank statement import csv excel reconcile", perm: "create_voucher", run: () => navigate("/bank-import") },
       { id: "ask", label: "Ask my books", hint: "natural-language Q&A", keywords: "ask question balance owe gst stock query", run: () => navigate("/ask") },
+      { id: "follow", label: "Receivables follow-up", hint: "payment reminders", keywords: "follow up reminder overdue receivable whatsapp email", run: () => navigate("/follow-up") },
       { id: "ledgers", label: "Ledgers", hint: "parties & accounts", keywords: "ledger party customer supplier account", perm: "manage_ledgers", run: () => navigate("/ledgers") },
       { id: "inventory", label: "Inventory", hint: "stock items", keywords: "stock item inventory godown", perm: "manage_inventory", run: () => navigate("/inventory") },
       { id: "reports", label: "Reports", hint: "P&L, balance sheet, GST", keywords: "report profit loss balance trial gst gstr", run: () => navigate("/reports") },

@@ -870,6 +870,18 @@ export async function fetchSalesInsightTotals(bounds: {
   };
 }
 
+/** Latest sales date per party — for receivables follow-up aging hints. */
+export async function fetchLastSaleDatesByParty(): Promise<Map<number, string>> {
+  const db = getActiveCompanyDb();
+  const rows = await db.select<{ party_ledger_id: number; last_sale: string }[]>(
+    `SELECT party_ledger_id, MAX(date) as last_sale
+     FROM voucher
+     WHERE voucher_type = 'sales' AND party_ledger_id IS NOT NULL
+     GROUP BY party_ledger_id`,
+  );
+  return new Map(rows.map((r) => [r.party_ledger_id, r.last_sale]));
+}
+
 export async function getVoucherLines(
   voucherId: number,
 ): Promise<VoucherLineRow[]> {

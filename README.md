@@ -108,6 +108,7 @@ Builds are **unsigned** for now (see caveats below).
 - **e-Way bills:** NIC generation from the invoice (sandbox/production)
 - **e-Invoicing (IRN):** IRN + signed QR on PDF; cancel-IRN; free direct NIC API (no GSP fees)
 - **Bank statement import:** CSV/Excel (HDFC/SBI/ICICI/Axis/Kotak layouts), learned rules, open-invoice matching, AI ledger suggestions
+- **Data import (migrate):** Excel/CSV ledgers, parties, and stock with opening balances — Tally-friendly column detect + templates — [docs/data-import.md](./docs/data-import.md)
 - **Open AR (FIFO):** receipts clear oldest unpaid sales first
 - Reports: Day Book, Ledger, Trial Balance, Profit & Loss, Balance Sheet
 - Balanced double-entry before save; posted vouchers editable until IRN/e-way locks them
@@ -236,6 +237,7 @@ site/                  Marketing landing (Vercel) — AI-first story
 6. **Done** — AI-first phases A–D (entry, documents, ask/insights, follow-up / close / anomalies)
 7. **Done** — Enterprise Server Edition packages (Linux + Windows)
 8. **Done** — AI-first public positioning (landing, docs/ai-first.md)
+9. **Done** — Data import for masters / openings (Excel/CSV, Tally-friendly)
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 

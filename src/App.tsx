@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { BankImportPage } from "./pages/BankImportPage";
+import { DataImportPage } from "./pages/DataImportPage";
 import { AskPage } from "./pages/AskPage";
 import { FollowUpPage } from "./pages/FollowUpPage";
 import { PeriodClosePage } from "./pages/PeriodClosePage";
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="inventory" element={<InventoryPage />} />
             <Route path="vouchers" element={<VouchersPage />} />
             <Route path="bank-import" element={<BankImportPage />} />
+            <Route path="data-import" element={<DataImportPage />} />
             <Route path="ask" element={<AskPage />} />
             <Route path="follow-up" element={<FollowUpPage />} />
             <Route path="period-close" element={<PeriodClosePage />} />

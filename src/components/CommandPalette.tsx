@@ -60,6 +60,7 @@ export function CommandPalette() {
       { id: "new", label: "New voucher", hint: "manual entry form", keywords: "voucher entry sale purchase payment receipt create", perm: "create_voucher", run: () => navigate("/vouchers/new") },
       { id: "vouchers", label: "Vouchers", hint: "day book", keywords: "vouchers list daybook entries", run: () => navigate("/vouchers") },
       { id: "bank", label: "Bank import", hint: "statement to vouchers", keywords: "bank statement import csv excel reconcile", perm: "create_voucher", run: () => navigate("/bank-import") },
+      { id: "dataimport", label: "Data import", hint: "migrate ledgers & stock", keywords: "import migrate tally excel csv ledger party stock opening", perm: "manage_ledgers", run: () => navigate("/data-import") },
       { id: "ask", label: "Ask my books", hint: "natural-language Q&A", keywords: "ask question balance owe gst stock query", run: () => navigate("/ask") },
       { id: "follow", label: "Receivables follow-up", hint: "payment reminders", keywords: "follow up reminder overdue receivable whatsapp email", run: () => navigate("/follow-up") },
       { id: "close", label: "Period close", hint: "month-end checklist", keywords: "period close month end gstr checklist hsn", run: () => navigate("/period-close") },

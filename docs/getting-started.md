@@ -17,6 +17,11 @@ npm run kite:dev      # or: npm run tauri dev
 4. Add a party under **Ledgers**, then post a **Sales** or **Payment** voucher
 5. On **Companies**, use **Backup** to save the SQLite file anywhere you like
 
+## Migrate from Tally / Excel
+
+Use **Data import** to bring ledgers, parties, and stock (with openings) from
+Excel/CSV — including Tally exports. Details: [docs/data-import.md](./data-import.md).
+
 ## AI-first (optional, ~2 minutes)
 
 Turn on AI under **Companies → AI quick entry** with a free OpenRouter key, then

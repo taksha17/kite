@@ -4,18 +4,23 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Forks](https://img.shields.io/github/forks/taksha17/kite?style=social)](https://github.com/taksha17/kite/fork)
 
-**Books that stay light.** · **Version 2.0** (AI-first)
+**Books that stay light.** · **Version 2.0 — AI-first**
 
-Kite is an MIT-licensed, open-source accounting app for Indian small and mid-size
-businesses — and anyone else who wants simple, local, double-entry books.
+Kite is an **AI-first**, MIT-licensed accounting app for Indian small and mid-size
+businesses: describe a sale (English or Hinglish) or snap a purchase bill — Kite
+**drafts** the voucher; **you** approve. Nothing auto-posts. Books stay in files
+you own (Solo desktop or self-hosted Enterprise).
 
+- **AI-first** — prompt-as-entry, bill capture, Ask my books, insights & follow-up drafts — [docs/ai-first.md](./docs/ai-first.md)
 - **Platform independent** — Windows, macOS, and Linux from one Tauri codebase
-- **Lightweight** — local SQLite companies; no forced cloud
-- **India-first** — INR, Apr–Mar financial year defaults, GST-ready seeds
+- **Lightweight** — local SQLite companies; no forced Kite cloud
+- **India-first** — INR, Apr–Mar FY, GST / e-way / e-invoice
 - **Forkable** — clone from Git, invent your own product on top
 
-**Landing page (downloads + demo videos):**
+**Landing page (AI-first story + downloads + demos):**
 [kite-v2-ten.vercel.app](https://kite-v2-ten.vercel.app/)
+
+**Try AI in ~2 minutes:** [docs/ai-first.md](./docs/ai-first.md) (free OpenRouter key, no card)
 
 This is an **original** product. It is not affiliated with Tally or any
 proprietary accounting suite.
@@ -80,6 +85,16 @@ Builds are **unsigned** for now (see caveats below).
 
 ## Features
 
+### AI-first (v2.0)
+
+- **Quick entry:** describe a sale in English or Hinglish — or snap a purchase bill — AI drafts the voucher; **you** Accept ([docs/ai-first.md](./docs/ai-first.md))
+- **Cmd/Ctrl-K:** draft or jump from anywhere
+- **Ask my books:** natural-language → read-only SQL on your company DB
+- **Home insights, open AR (FIFO), follow-up drafts, period close, anomaly watch**
+- **BYOK:** OpenRouter free models (no card), plus OpenAI / Anthropic / Gemini — draft-only, never auto-post
+
+### Books & India GST
+
 - Create and open companies (one SQLite file per company)
 - Default Indian chart of groups + common ledgers
 - Ledgers and parties (state + GSTIN)
@@ -93,10 +108,7 @@ Builds are **unsigned** for now (see caveats below).
 - **e-Way bills:** NIC generation from the invoice (sandbox/production)
 - **e-Invoicing (IRN):** IRN + signed QR on PDF; cancel-IRN; free direct NIC API (no GSP fees)
 - **Bank statement import:** CSV/Excel (HDFC/SBI/ICICI/Axis/Kotak layouts), learned rules, open-invoice matching, AI ledger suggestions
-- **AI-first entry:** describe a sale (English/Hinglish) or snap a purchase bill; Cmd-K; onboarding drafts masters. **AI drafts only — never auto-posts.** BYOK (OpenRouter free models work without a card)
-- **Ask my books:** natural-language question → read-only SQL on your company DB
 - **Open AR (FIFO):** receipts clear oldest unpaid sales first
-- **Home insights,** receivables follow-up drafts, period-close checklist, anomaly watch
 - Reports: Day Book, Ledger, Trial Balance, Profit & Loss, Balance Sheet
 - Balanced double-entry before save; posted vouchers editable until IRN/e-way locks them
 
@@ -209,8 +221,9 @@ src-tauri/             Tauri Solo shell (Rust)
 kite-server/           Kite Enterprise server (Rust, axum + sqlx)
 scripts/               Dev / build / server / demo walkthroughs
 site/                  Marketing landing (Vercel)
-docs/                  Getting started, deployment, Drive
+docs/                  Getting started, AI-first, deployment, Drive
 demo/                  Generated walkthrough videos
+site/                  Marketing landing (Vercel) — AI-first story
 ```
 
 ## Roadmap
@@ -222,6 +235,7 @@ demo/                  Generated walkthrough videos
 5. **Done** — e-invoicing (IRN + signed QR) via free direct IRP API
 6. **Done** — AI-first phases A–D (entry, documents, ask/insights, follow-up / close / anomalies)
 7. **Done** — Enterprise Server Edition packages (Linux + Windows)
+8. **Done** — AI-first public positioning (landing, docs/ai-first.md)
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 

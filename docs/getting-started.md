@@ -17,6 +17,12 @@ npm run kite:dev      # or: npm run tauri dev
 4. Add a party under **Ledgers**, then post a **Sales** or **Payment** voucher
 5. On **Companies**, use **Backup** to save the SQLite file anywhere you like
 
+## AI-first (optional, ~2 minutes)
+
+Turn on AI under **Companies → AI quick entry** with a free OpenRouter key, then
+draft vouchers by sentence or bill photo. Step-by-step:
+[docs/ai-first.md](./ai-first.md).
+
 ## Low-disk Ubuntu tip
 
 If `/` is nearly full, always:

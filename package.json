@@ -2,7 +2,7 @@
   "name": "kite",
   "private": true,
   "version": "2.0.1",
-  "description": "Free, open-source accounting for Indian small businesses — GST invoices, e-way bills, inventory and reports. Offline-first desktop app with optional Kite Enterprise multi-user server.",
+  "description": "AI-first open-source accounting for Indian small businesses — describe a sale or snap a bill, review the draft, then post. GST, e-way, Solo desktop or Kite Enterprise.",
   "license": "MIT",
   "type": "module",
   "scripts": {

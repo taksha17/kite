@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Kite — Books that stay light</title>
-<meta name="description" content="Free, open-source accounting for Indian small businesses. Solo desktop or Kite Enterprise for the office. GST, e-way, inventory — your data stays with you." />
+<title>Kite — AI-first open-source accounting</title>
+<meta name="description" content="Kite is AI-first accounting for Indian businesses: describe a sale or snap a bill, review the draft, then post. GST, e-way, Solo or Enterprise — your data stays yours. MIT open source." />
 <link rel="icon" type="image/svg+xml" href="assets/kite.svg" />
 <style>
   :root {
@@ -179,6 +179,7 @@
   <div class="wrap nav">
     <a class="brand" href="#top"><img src="assets/kite.svg" alt="Kite logo" /> Kite</a>
     <span class="spacer"></span>
+    <a class="link" href="#ai-first">AI-first</a>
     <a class="link" href="#demo">Demo</a>
     <a class="link" href="#download">Download</a>
     <a class="link" href="#features">Features</a>
@@ -191,22 +192,45 @@
 <section class="hero" id="top">
   <div class="wrap">
     <img class="logo" src="assets/kite.svg" alt="Kite" />
-    <span class="pill" id="version-pill">v2.0 · MIT open source</span>
+    <span class="pill" id="version-pill">v2.0 · AI-first · MIT</span>
     <h1>Books that stay light.</h1>
     <p class="sub">
-      Free, open-source accounting for Indian small businesses — GST invoices,
-      e-way bills, inventory and reports. <b>Solo</b> on one desk, or
-      <b>Enterprise</b> for an office on your LAN. Your data stays in files you own.
+      <b>AI-first accounting</b> for Indian businesses — describe a sale in English
+      or Hinglish, or snap a purchase bill. Kite drafts the voucher; <b>you</b>
+      approve. Nothing auto-posts. Solo on one desk, or Enterprise on your LAN.
     </p>
     <div class="cta-row">
-      <a class="btn btn-primary" href="#download">Download</a>
-      <a class="btn btn-ghost" href="#demo">Watch demos</a>
+      <a class="btn btn-primary" href="#ai-first">See how AI-first works</a>
+      <a class="btn btn-ghost" href="#download">Download free</a>
     </div>
     <div class="shields">
       <a href="https://github.com/taksha17/kite"><img src="https://img.shields.io/github/stars/taksha17/kite?style=social" alt="GitHub stars" /></a>
       <a href="https://github.com/taksha17/kite/fork"><img src="https://img.shields.io/github/forks/taksha17/kite?style=social" alt="GitHub forks" /></a>
       <a href="https://github.com/taksha17/kite/actions/workflows/ci.yml"><img src="https://github.com/taksha17/kite/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
     </div>
+  </div>
+</section>
+
+<section id="ai-first">
+  <div class="wrap">
+    <h2>Built AI-first — not AI bolted on</h2>
+    <p class="lead">
+      The prompt <em>is</em> the voucher screen. Bring your own key
+      (OpenRouter’s free models work with no card). Drafts only — you always post.
+    </p>
+    <div class="feat" style="margin-top:36px">
+      <div class="f"><h3>Talk or type the entry</h3><p>English or Hinglish: “sold 2 mice to Agarwal @799 UPI” — Cmd/Ctrl-K from anywhere.</p></div>
+      <div class="f"><h3>Snap a purchase bill</h3><p>Vision models draft the purchase voucher; create missing parties/items in one click.</p></div>
+      <div class="f"><h3>Ask my books</h3><p>Natural-language questions become read-only SQL on <em>your</em> company DB — numbers you can trust.</p></div>
+      <div class="f"><h3>Insights &amp; follow-up</h3><p>Home insights, open AR, payment-reminder drafts, period close, anomaly watch.</p></div>
+      <div class="f"><h3>You stay in control</h3><p>AI never auto-posts. Review GST, HSN, and parties before Accept.</p></div>
+      <div class="f"><h3>Your keys, your files</h3><p>BYOK to your provider. Books stay in local SQLite or on your Enterprise parent — not a Kite cloud.</p></div>
+    </div>
+    <p class="lead" style="margin-top:28px">
+      Setup in about two minutes:
+      <a href="https://github.com/taksha17/kite/blob/main/docs/ai-first.md">docs/ai-first.md</a>
+      · <a href="#demo">Watch the product demos</a>
+    </p>
   </div>
 </section>
 
@@ -354,13 +378,13 @@
 <section id="features" style="padding-top:0">
   <div class="wrap">
     <h2>Everything a small business needs</h2>
-    <p class="lead">No subscriptions, no forced cloud, no feature gates.</p>
+    <p class="lead">AI-first entry, full GST books, Solo or Enterprise — no subscriptions.</p>
     <div class="feat">
+      <div class="f"><h3>AI-first entry</h3><p>Describe a voucher or snap a bill — AI drafts for review. Bring your own key; never auto-posts.</p></div>
       <div class="f"><h3>GST, done right</h3><p>CGST/SGST/IGST split, HSN/SAC, GSTR-1 &amp; GSTR-3B style summaries with one-click Excel export.</p></div>
       <div class="f"><h3>e-Way &amp; e-Invoice</h3><p>NIC e-way bills and IRN + signed QR — sandbox and production, free direct API.</p></div>
       <div class="f"><h3>Inventory</h3><p>Units, godowns, stock items, sales/purchase stock lines and stock summaries.</p></div>
       <div class="f"><h3>Kite Enterprise</h3><p>One parent PC holds the books; staff on any OS open a browser. Roles + audit log.</p></div>
-      <div class="f"><h3>AI quick entry</h3><p>Describe a voucher or snap a bill — AI drafts for review. Bring your own key; never auto-posts.</p></div>
       <div class="f"><h3>Offline &amp; private</h3><p>One SQLite file per company. Copy it to back up. You own your books.</p></div>
     </div>
   </div>
@@ -480,7 +504,7 @@
       if (!rel) return;
       if (rel.tag_name) {
         document.getElementById("latest-version").textContent = rel.tag_name;
-        document.getElementById("version-pill").textContent = rel.tag_name + " · MIT open source";
+        document.getElementById("version-pill").textContent = rel.tag_name + " · AI-first · MIT";
       }
       (rel.assets || []).forEach(function (a) {
         var slot = document.querySelector('[data-meta="' + a.name + '"]');

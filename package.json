@@ -20,6 +20,7 @@
     "kite:icons": "node scripts/make-icons.mjs",
     "kite:demo": "node scripts/demo-walkthrough.mjs --mode desktop",
     "kite:demo:mobile": "node scripts/demo-walkthrough.mjs --mode mobile",
+    "kite:demo:ai": "node scripts/demo-ai-walkthrough.mjs",
     "kite:demo:all": "node scripts/demo-walkthrough.mjs --mode all"
   },
   "dependencies": {

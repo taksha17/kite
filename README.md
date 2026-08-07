@@ -109,6 +109,7 @@ Builds are **unsigned** for now (see caveats below).
 - **e-Invoicing (IRN):** IRN + signed QR on PDF; cancel-IRN; free direct NIC API (no GSP fees)
 - **Bank statement import:** CSV/Excel (HDFC/SBI/ICICI/Axis/Kotak layouts), learned rules, open-invoice matching, AI ledger suggestions
 - **Data import (migrate):** Excel/CSV ledgers, parties, and stock with opening balances — Tally-friendly column detect + templates — [docs/data-import.md](./docs/data-import.md)
+- **Tally live migrate:** keep TallyPrime open (HTTP :9000); Kite pulls ledgers/stock for review — [docs/tally-migrate.md](./docs/tally-migrate.md)
 - **Open AR (FIFO):** receipts clear oldest unpaid sales first
 - Reports: Day Book, Ledger, Trial Balance, Profit & Loss, Balance Sheet
 - Balanced double-entry before save; posted vouchers editable until IRN/e-way locks them
@@ -238,6 +239,7 @@ site/                  Marketing landing (Vercel) — AI-first story
 7. **Done** — Enterprise Server Edition packages (Linux + Windows)
 8. **Done** — AI-first public positioning (landing, docs/ai-first.md)
 9. **Done** — Data import for masters / openings (Excel/CSV, Tally-friendly)
+10. **Done** — Live Tally HTTP migrate (ledgers + stock while Tally is open)
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 

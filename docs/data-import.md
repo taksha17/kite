@@ -55,6 +55,11 @@ signed opening is fine).
 - Account **groups** — not created; only mapped to Kite’s seeded chart
 - **Vouchers** / day book history — not imported yet
 
+## Live Tally (no Excel)
+
+Prefer keeping Tally open? Use **[Migrate from Tally](./tally-migrate.md)** —
+HTTP pull from port 9000 on the same PC (Kite Solo).
+
 ## Cutover tips
 
 - Pick a cutover date; import openings as of that date.

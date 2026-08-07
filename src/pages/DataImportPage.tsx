@@ -234,7 +234,8 @@ export function DataImportPage() {
           <h2>1. Upload a sheet</h2>
           <p className="muted small">
             One sheet at a time. Download a template, or export masters from
-            TallyPrime to Excel and upload here.{" "}
+            TallyPrime to Excel and upload here. Prefer keeping Tally open? Use{" "}
+            <Link to="/tally-migrate">Migrate from Tally</Link> (live HTTP).{" "}
             <a
               href="https://github.com/taksha17/kite/blob/main/docs/data-import.md"
               target="_blank"

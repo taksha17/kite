@@ -19,8 +19,11 @@ npm run kite:dev      # or: npm run tauri dev
 
 ## Migrate from Tally / Excel
 
-Use **Data import** to bring ledgers, parties, and stock (with openings) from
-Excel/CSV — including Tally exports. Details: [docs/data-import.md](./data-import.md).
+**Live (recommended when Tally is on the same PC):** open TallyPrime + Kite Solo →
+[Migrate from Tally](./tally-migrate.md) (HTTP port 9000).
+
+**Files:** use **Data import** for Excel/CSV masters (including Tally exports) —
+[data-import.md](./data-import.md).
 
 ## AI-first (optional, ~2 minutes)
 

@@ -27,6 +27,9 @@ pub const COMPANY_SCHEMA_STATEMENTS: &[&str] = &[
   state_code TEXT,
   email TEXT,
   address TEXT,
+  city TEXT,
+  pin TEXT,
+  phone TEXT,
   notes TEXT
 )"#,
     r#"CREATE TABLE IF NOT EXISTS voucher_type (
@@ -247,6 +250,21 @@ pub const COMPANY_COLUMN_MIGRATIONS: &[ColumnMigration] = &[
         table: "ledger",
         column: "address",
         ddl: "ALTER TABLE ledger ADD COLUMN address TEXT",
+    },
+    ColumnMigration {
+        table: "ledger",
+        column: "city",
+        ddl: "ALTER TABLE ledger ADD COLUMN city TEXT",
+    },
+    ColumnMigration {
+        table: "ledger",
+        column: "pin",
+        ddl: "ALTER TABLE ledger ADD COLUMN pin TEXT",
+    },
+    ColumnMigration {
+        table: "ledger",
+        column: "phone",
+        ddl: "ALTER TABLE ledger ADD COLUMN phone TEXT",
     },
     ColumnMigration {
         table: "voucher",

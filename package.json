@@ -18,7 +18,9 @@
     "kite:server:test": "cd kite-server && cargo test",
     "kite:package:enterprise": "bash scripts/package-enterprise.sh",
     "kite:icons": "node scripts/make-icons.mjs",
-    "kite:demo": "node scripts/demo-walkthrough.mjs"
+    "kite:demo": "node scripts/demo-walkthrough.mjs --mode desktop",
+    "kite:demo:mobile": "node scripts/demo-walkthrough.mjs --mode mobile",
+    "kite:demo:all": "node scripts/demo-walkthrough.mjs --mode all"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

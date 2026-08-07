@@ -14,11 +14,38 @@ businesses — and anyone else who wants simple, local, double-entry books.
 - **India-first** — INR, Apr–Mar financial year defaults, GST-ready seeds
 - **Forkable** — clone from Git, invent your own product on top
 
-**Download + demo video:
-[kite-v2-ten.vercel.app](https://kite-v2-ten.vercel.app/)**
+**Landing page (downloads + demo videos):**
+[kite-v2-ten.vercel.app](https://kite-v2-ten.vercel.app/)
 
 This is an **original** product. It is not affiliated with Tally or any
 proprietary accounting suite.
+
+## Which product do I need?
+
+| Product | Who it's for | How you use it |
+| --- | --- | --- |
+| **Kite Solo** | One person / one desk | Desktop installers (Windows / macOS / Linux). Books stay in local SQLite files. |
+| **Kite Enterprise** (Server Edition) | Office with shared books (1 parent PC + staff) | Parent runs `kite-server`; everyone else opens a **browser** to that PC on the LAN. Parent and child OS can differ. |
+| **Phone-only** | Owner whose phone is the billing device | Browser PWA + optional Google Drive snapshots — [docs/google-drive.md](./docs/google-drive.md) |
+
+Do **not** put Solo’s company `.db` files on a Windows/NAS shared drive and open them from multiple PCs. That can corrupt SQLite. For shared books, use **Enterprise** (HTTP to the parent), not a file share.
+
+## Demo videos
+
+| Tour | Watch / download |
+| --- | --- |
+| **Desktop (PC)** — company → sale → GST invoice → reports → roles | [kite-desktop-walkthrough.webm](https://github.com/taksha17/kite/releases/latest/download/kite-desktop-walkthrough.webm) |
+| **Mobile screen** — same flow on a phone-sized viewport | [kite-mobile-walkthrough.webm](https://github.com/taksha17/kite/releases/latest/download/kite-mobile-walkthrough.webm) |
+
+Also embedded on the [landing page](https://kite-v2-ten.vercel.app/#demo). Regenerate locally:
+
+```bash
+npm run build
+# kite-server release binary available (see scripts/demo-walkthrough.mjs)
+npm run kite:demo          # desktop
+npm run kite:demo:mobile   # mobile
+# or: npm run kite:demo:all
+```
 
 ## Screenshots
 
@@ -26,13 +53,12 @@ proprietary accounting suite.
 | --- | --- | --- |
 | ![Voucher entry](docs/images/screenshot-voucher.png) | ![GST tax invoice](docs/images/screenshot-invoice.png) | ![Reports](docs/images/screenshot-reports.png) |
 
-A scripted end-to-end demo (company → voucher → invoice → reports → backup)
-can be regenerated any time with `npm run kite:demo`.
-
 ## Download
 
 Grab the latest build from
 [**Releases**](https://github.com/taksha17/kite/releases/latest):
+
+### Solo (desktop)
 
 | Platform | Installer |
 | --- | --- |
@@ -40,45 +66,93 @@ Grab the latest build from
 | macOS (Apple Silicon) | [kite-macos-arm64.dmg](https://github.com/taksha17/kite/releases/latest/download/kite-macos-arm64.dmg) |
 | macOS (Intel) | [kite-macos-x64.dmg](https://github.com/taksha17/kite/releases/latest/download/kite-macos-x64.dmg) |
 | Linux (Ubuntu/Debian) | [kite-linux-x64.deb](https://github.com/taksha17/kite/releases/latest/download/kite-linux-x64.deb) |
-| Android / iOS | PWA via Kite Enterprise — [docs/deployment.md](./docs/deployment.md) |
-| **Enterprise (office)** | Parent PC runs the server; children use any browser — [docs/deployment.md](./docs/deployment.md) |
-| Windows parent (Enterprise) | [kite-enterprise-windows-x64.zip](https://github.com/taksha17/kite/releases/latest/download/kite-enterprise-windows-x64.zip) |
-| Linux parent (Enterprise) | [kite-enterprise-linux-x64.tar.gz](https://github.com/taksha17/kite/releases/latest/download/kite-enterprise-linux-x64.tar.gz) |
 
-Builds are unsigned for now: on Windows click **More info → Run anyway**, on
-macOS **right-click → Open** the first time.
+### Enterprise (parent / office PC)
 
-**New here?** Watch the
-[2-minute walkthrough video](https://github.com/taksha17/kite/releases/latest/download/kite-walkthrough.webm) —
-company setup to GST invoice to Excel export.
+| Parent OS | Package |
+| --- | --- |
+| Windows (64-bit) | [kite-enterprise-windows-x64.zip](https://github.com/taksha17/kite/releases/latest/download/kite-enterprise-windows-x64.zip) |
+| Linux (x64) | [kite-enterprise-linux-x64.tar.gz](https://github.com/taksha17/kite/releases/latest/download/kite-enterprise-linux-x64.tar.gz) |
 
-## Features (v0.1+)
+Staff phones / tablets: open the Enterprise URL in the browser → “Add to Home Screen” (PWA). Setup guide: [docs/deployment.md](./docs/deployment.md).
+
+Builds are **unsigned** for now (see caveats below).
+
+## Features
 
 - Create and open companies (one SQLite file per company)
 - Default Indian chart of groups + common ledgers
 - Ledgers and parties (state + GSTIN)
 - Vouchers: Payment, Receipt, Contra, Journal, Sales, Purchase
-- **GST MVP:** company GST on/off, intra vs inter-state CGST/SGST/IGST split, HSN/SAC, GSTR-1 & GSTR-3B style summaries, **Excel (.xlsx) export**
-- **Inventory MVP:** units, godowns, stock items (fixed purchase rate), sales/purchase stock lines, stock journal, stock summary
-- **Multi-user MVP:** per-company logins, Owner/Accountant/Data Entry roles, voucher audit log
-- **Kite Enterprise:** optional multi-user server (`kite-server`) for an office — one parent PC holds the books locally; child PCs (any OS) open a browser/PWA — per-company SQLite, JWT sessions, owner-only backups — [docs/deployment.md](./docs/deployment.md)
-- **Phone-only mode:** run Kite entirely in a phone browser — SQLite-in-WASM on the device, **Google sign-in with snapshots backing up to the owner's own Drive**, restore on a new phone in one tap. No PC, no server — [docs/google-drive.md](./docs/google-drive.md)
-- **PDF invoices:** tax invoice preview + download for Sales vouchers; email via your own SMTP
-- **e-Way bills:** generate NIC e-way bills straight from the invoice (sandbox/production endpoints, per-company credentials)
-- **e-Invoicing (IRN):** register B2B invoices with the government IRP from the desktop app — IRN + signed QR printed on the invoice PDF, cancel-IRN support, free direct NIC API (no GSP fees), sandbox/production presets
-- **Bank statement import:** drop in a CSV/Excel statement (HDFC/SBI/ICICI/Axis/Kotak layouts auto-detected) — withdrawals become payments, deposits become receipts, counter-ledgers suggested from party names and your past choices, already-imported rows auto-skipped
-- **AI-first entry (free tier built in):** the AI prompt IS the new-voucher screen — describe a sale in English or Hinglish (or dictate it), **or snap a purchase bill** and a vision model drafts the voucher for review; unknown parties/items from the bill can be created in one click (GSTIN validated); a Cmd-K palette drafts/jumps from anywhere; first-run AI onboarding proposes your ledgers, items and GST setting. The AI can only draft, never post. Bring your own key — **OpenRouter's free models work out of the box (no card, 2-minute setup)** including vision via `openrouter/free`, plus OpenAI/Anthropic/Gemini; keys stay server-side on Enterprise, in-app on Solo
-- **Ask my books:** type a question (or Ctrl+K) — the AI writes a read-only SQL query, Kite runs it on your company DB, and the answer + table use only those numbers
-- **Open AR (FIFO):** receipts clear the oldest unpaid sales first — bank import matches deposits to remaining open amounts; follow-up and home insights use true overdue
-- **Home insights:** receivables, payables, GST this month, sales vs last month, and low-stock alerts — computed from your books on open
-- **Receivables follow-up:** draft WhatsApp/email payment reminders for customers with open balances — you always tap send
-- **Period close:** month-end checklist (bank reconcile, HSN gaps, GSTR-3B prep, receivables)
-- **Anomaly watch:** duplicate voucher numbers, unusual amounts, weekend entries — rules flag them for review
-- **Bank statement import:** CSV/Excel → payment & receipt vouchers, with learned rules, invoice matching, and AI ledger suggestions
+- **GST:** company GST on/off, intra vs inter-state CGST/SGST/IGST, HSN/SAC, GSTR-1 & GSTR-3B style summaries, **Excel (.xlsx) export**
+- **Inventory:** units, godowns, stock items, sales/purchase stock lines, stock journal, stock summary
+- **Multi-user:** per-company logins, Owner / Accountant / Data Entry roles, voucher audit log
+- **Kite Enterprise:** parent PC server + browser clients on the LAN — [docs/deployment.md](./docs/deployment.md)
+- **Phone-only mode:** sql.js in the browser + optional Google Drive backups — [docs/google-drive.md](./docs/google-drive.md)
+- **PDF invoices:** preview + download for Sales; email via your own SMTP
+- **e-Way bills:** NIC generation from the invoice (sandbox/production)
+- **e-Invoicing (IRN):** IRN + signed QR on PDF; cancel-IRN; free direct NIC API (no GSP fees)
+- **Bank statement import:** CSV/Excel (HDFC/SBI/ICICI/Axis/Kotak layouts), learned rules, open-invoice matching, AI ledger suggestions
+- **AI-first entry:** describe a sale (English/Hinglish) or snap a purchase bill; Cmd-K; onboarding drafts masters. **AI drafts only — never auto-posts.** BYOK (OpenRouter free models work without a card)
+- **Ask my books:** natural-language question → read-only SQL on your company DB
+- **Open AR (FIFO):** receipts clear oldest unpaid sales first
+- **Home insights,** receivables follow-up drafts, period-close checklist, anomaly watch
 - Reports: Day Book, Ledger, Trial Balance, Profit & Loss, Balance Sheet
-- Balanced double-entry validation before save; posted vouchers can be edited in place (locked while an IRN/e-way bill is active)
+- Balanced double-entry before save; posted vouchers editable until IRN/e-way locks them
 
-## Quick start
+## Caveats, guardrails & security
+
+Read this before putting real company data on a shared network.
+
+### Installers & trust
+
+- **Unsigned binaries.** Windows SmartScreen / macOS Gatekeeper will warn. Use **More info → Run anyway** (Windows) or **right-click → Open** (macOS). Prefer downloading only from [official Releases](https://github.com/taksha17/kite/releases).
+- **No auto-update channel.** You choose when to install a newer release.
+
+### Data ownership & backups
+
+- **You own the files.** Solo: company DBs under the OS app-data folder. Enterprise: everything under the parent’s `--data-dir` (`kite-registry.db`, `jwt_secret.hex`, `kite-company-*.db`).
+- **Back up deliberately.** Copy the data directory or use Companies → Backup (owner). Losing the only copy loses the books.
+- **Never put the live data directory on a multi-writer network share** for Solo. Concurrent SQLite over SMB/NFS is unsafe. Use Enterprise for shared access.
+
+### Kite Enterprise (LAN / server)
+
+- **Parent holds the only writers.** Children are browsers talking HTTP(S) to the parent — not file sharing.
+- **HTTP on a trusted LAN is convenient but not encrypted.** Session JWTs travel in clear text. For untrusted networks or the public internet, put **HTTPS** in front (Caddy/nginx) — see [docs/deployment.md](./docs/deployment.md).
+- **Open the firewall only as needed** (default port `8080`). Prefer binding carefully if the parent is exposed beyond the office LAN.
+- **JWT secret** is auto-generated in the data dir (`jwt_secret.hex`). Back it up with the data; treat it like a credential.
+- **Passwords** are stored as PBKDF2 hashes (not plaintext). Use strong owner/user passwords in production — demo passwords in walkthrough videos are not for real books.
+- **Roles are a guardrail, not a security boundary against a malicious local admin.** An Owner (or anyone with the DB files) can read everything.
+
+### AI (optional)
+
+- **Off until you configure a provider/key.** Kite does not require AI to keep books.
+- **Draft-only:** the model proposes vouchers / answers; **you** must review and accept. Nothing auto-posts from the LLM.
+- **Ask my books** runs **read-only** SQL generated by the model; still review results before acting.
+- **Bring your own key.** When AI is on, prompts and relevant book context are sent to **your chosen provider** (OpenRouter / OpenAI / Anthropic / Gemini). That leaves your machine. Do not enable AI if that is unacceptable for your data policy.
+- **Keys:** stored in company settings (Solo: local; Enterprise: server-side). Protect backups of the company DB.
+- **Free-tier models** can rate-limit, hallucinate, or change quality — always verify GST amounts, parties, and HSN before posting.
+
+### Government & third-party integrations
+
+- **e-Way / e-Invoice:** credentials live in the company database. Use **sandbox** until you are sure. Wrong environment or keys can fail against NIC or create real IRNs.
+- **SMTP email:** credentials you enter are used to send invoice mail; they sit in settings/DB with the rest of the company data.
+- **Google Drive (phone-only):** last-writer-wins snapshots — **not** simultaneous multi-user. Drive access is to the owner’s own account; configure OAuth client IDs carefully ([docs/google-drive.md](./docs/google-drive.md)).
+
+### Application guardrails
+
+- **Double-entry must balance** before a voucher saves.
+- **IRN / e-way** can lock invoice edits while active.
+- **Receivables follow-up** drafts WhatsApp/email text — **you** send; Kite does not spam customers by itself.
+- **No phone-home telemetry** from the core app. Network use is what you enable (AI providers, NIC, SMTP, Drive, Enterprise HTTP).
+
+### What Kite is not
+
+- Not a substitute for a CA’s advice on GST filings.
+- Not a hosted SaaS with Kite-operated cloud (unless **you** host Enterprise).
+- Not affiliated with Tally or proprietary “Tally-compatible” suites.
+
+## Quick start (developers)
 
 ### Prerequisites
 
@@ -88,15 +162,11 @@ company setup to GST invoice to Excel export.
 
 ### Develop
 
-Always use the volume-aware scripts on machines with a full root disk — they put
-Cargo/npm/temp caches under `.cache/` on this drive:
-
 ```bash
 git clone https://github.com/taksha17/kite.git
 cd kite
 npm install
 npm run kite:dev      # preferred (uses scripts/env.sh)
-# or: source scripts/env.sh && npm run tauri dev
 ```
 
 ### Tests
@@ -106,46 +176,23 @@ npm test                          # frontend unit tests (vitest)
 npm run kite:server:test          # server API + auth tests (cargo)
 ```
 
-### Kite Enterprise (optional multi-user / office server)
-
-Run **Kite Enterprise** on one parent PC; staff open the same books from any
-browser on the LAN (Windows/macOS/Linux/phone). Prefer the prebuilt packages
-from [Releases](https://github.com/taksha17/kite/releases/latest), or build:
+### Kite Enterprise from source
 
 ```bash
-npm run build                                          # web app → dist/
+npm run build
 cd kite-server && cargo build --release
 ./target/release/kite-server serve --data-dir ./kite-data --web-dir ../dist --host 0.0.0.0 --port 8080
 ```
 
-Office setup (LAN parent/child, Windows zip / Linux tarball, systemd, HTTPS):
-[docs/deployment.md](./docs/deployment.md).
+Prebuilt archives and office LAN setup: [docs/deployment.md](./docs/deployment.md).
 
-### Production builds
-
-```bash
-npm run kite:build    # preferred; caches stay on this partition
-```
-
-On Linux this repo produces `.deb` / `.rpm` (AppImage is skipped — linuxdeploy
-is flaky without FUSE). Artifacts:
-
-- Binary: `.cache/cargo-target/release/kite`
-- Bundles: `.cache/cargo-target/release/bundle/`
-
-Optional local install:
+### Production Solo builds
 
 ```bash
-mkdir -p ~/apps/kite
-cp .cache/cargo-target/release/kite ~/apps/kite/
-~/apps/kite/kite
+npm run kite:build
 ```
 
-Or install the `.deb` system-wide when `/` has space:
-
-```bash
-sudo dpkg -i .cache/cargo-target/release/bundle/deb/Kite_0.1.0_amd64.deb
-```
+Artifacts land under `.cache/cargo-target/release/` (and `bundle/`).
 
 ## Project layout
 
@@ -158,10 +205,12 @@ src/lib/gdrive/        Phone-only mode: Google sign-in + Drive snapshots
 src/lib/ai/            AI quick entry (prompt, strict parse, providers)
 src/lib/ewaybill/      NIC e-way bill client
 src/lib/einvoice/      IRP e-invoice client (IRN + signed QR)
-src-tauri/             Tauri shell (Rust)
+src-tauri/             Tauri Solo shell (Rust)
 kite-server/           Kite Enterprise server (Rust, axum + sqlx)
-scripts/               Volume-aware dev/build/server/demo scripts
-docs/                  Getting started, deployment
+scripts/               Dev / build / server / demo walkthroughs
+site/                  Marketing landing (Vercel)
+docs/                  Getting started, deployment, Drive
+demo/                  Generated walkthrough videos
 ```
 
 ## Roadmap
@@ -169,22 +218,22 @@ docs/                  Getting started, deployment
 1. **Done** — core books, GST invoices & Excel reports, inventory, roles & audit
 2. **Done** — PDF invoices + email, e-way bills, Kite Enterprise server + PWA
 3. **Done** — AI quick entry (BYOK, draft-only) on Solo and Enterprise
-4. **Done** — phone-only PWA with Google Drive backup (docs/google-drive.md)
-5. **Done** — e-invoicing (IRN + signed QR on invoices) via free direct IRP API
+4. **Done** — phone-only PWA with Google Drive backup
+5. **Done** — e-invoicing (IRN + signed QR) via free direct IRP API
 6. **Done** — AI-first phases A–D (entry, documents, ask/insights, follow-up / close / anomalies)
+7. **Done** — Enterprise Server Edition packages (Linux + Windows)
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 Like Kite? **Star the repo.** Building your own thing on top?
-[**Fork it**](https://github.com/taksha17/kite/fork) — that's what the MIT
-license is for.
+[**Fork it**](https://github.com/taksha17/kite/fork) — that's what the MIT license is for.
 
 ## License
 
 [MIT](./LICENSE)
 
-## Data & privacy
+## Data & privacy (short)
 
-Your company databases live in the app data directory on your machine. You own
-the files. Back them up by copying the `kite-company-*.db` files from that
-folder.
+Your company databases live on **your** machine (or your Enterprise parent). You own
+the files. Back them up. Optional AI and government APIs only run when you
+configure them — see **Caveats, guardrails & security** above.

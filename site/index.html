@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Kite — Books that stay light</title>
-<meta name="description" content="Free, open-source accounting for Indian small businesses. GST invoices, e-way bills, inventory and reports — offline-first, your data stays with you." />
+<meta name="description" content="Free, open-source accounting for Indian small businesses. Solo desktop or Kite Enterprise for the office. GST, e-way, inventory — your data stays with you." />
 <link rel="icon" type="image/svg+xml" href="assets/kite.svg" />
 <style>
   :root {
@@ -22,7 +22,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body {
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: "Segoe UI", ui-sans-serif, system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
     color: var(--ink);
     background: var(--paper);
     line-height: 1.6;
@@ -32,7 +32,6 @@
   img { max-width: 100%; display: block; }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
 
-  /* ---------- header ---------- */
   header {
     position: sticky; top: 0; z-index: 20;
     background: rgba(8, 48, 56, 0.92);
@@ -53,7 +52,6 @@
   }
   .nav .gh-btn:hover { background: #f6b878; text-decoration: none; }
 
-  /* ---------- hero ---------- */
   .hero {
     background: linear-gradient(160deg, var(--teal-night) 0%, var(--teal-deep) 55%, var(--teal) 100%);
     color: #eaf6f7;
@@ -67,7 +65,7 @@
     padding: 4px 12px; border-radius: 999px; margin-bottom: 18px;
   }
   .hero h1 { font-size: clamp(34px, 5.6vw, 56px); line-height: 1.1; color: #fff; letter-spacing: -0.5px; }
-  .hero p.sub { max-width: 620px; margin: 18px auto 30px; font-size: clamp(15.5px, 2vw, 18.5px); color: #cde9ec; }
+  .hero p.sub { max-width: 640px; margin: 18px auto 30px; font-size: clamp(15.5px, 2vw, 18.5px); color: #cde9ec; }
   .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
   .btn {
     display: inline-flex; align-items: center; gap: 9px;
@@ -82,14 +80,13 @@
   .shields { margin-top: 26px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
   .shields img { height: 22px; display: inline-block; }
 
-  /* ---------- sections ---------- */
   section { padding: 72px 0; }
   h2 { font-size: clamp(26px, 3.6vw, 36px); letter-spacing: -0.4px; text-align: center; }
+  h3 { font-size: 20px; color: var(--teal-deep); margin-bottom: 8px; }
   .lead { text-align: center; color: var(--muted); max-width: 640px; margin: 12px auto 0; }
   .version-line { text-align:center; margin-top: 10px; font-size: 14px; color: var(--muted); }
   .version-line b { color: var(--teal-deep); }
 
-  /* ---------- download cards ---------- */
   .grid { display: grid; gap: 18px; margin-top: 40px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
   .card {
     background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
@@ -109,29 +106,60 @@
   .card .dl:hover { background: var(--teal-deep); text-decoration: none; }
   .card .alt { font-size: 12.5px; color: var(--muted); text-align: center; margin-top: 8px; }
   .card.pwa { background: linear-gradient(150deg, #ffffff, #fef4ea); }
+  .card.enterprise { background: linear-gradient(150deg, #ffffff, #eef8fa); }
+  .section-label {
+    margin-top: 48px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--teal-deep); text-align: center;
+  }
   .fineprint { margin-top: 26px; font-size: 13.5px; color: var(--muted); background: #fff; border: 1px dashed var(--line); border-radius: 12px; padding: 14px 18px; }
   .fineprint b { color: var(--ink); }
 
-  /* ---------- demo video ---------- */
+  .video-grid {
+    display: grid; gap: 28px; margin-top: 36px;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 900px) {
+    .video-grid { grid-template-columns: 1.35fr 0.75fr; align-items: start; }
+  }
+  .video-card h3 { text-align: left; }
+  .video-card p { font-size: 14px; color: var(--muted); margin-bottom: 12px; }
   .video-frame {
-    margin-top: 36px; border-radius: var(--radius); overflow: hidden;
+    border-radius: var(--radius); overflow: hidden;
     border: 1px solid var(--line); box-shadow: 0 18px 44px rgba(10,85,97,.18);
     background: #000;
   }
-  .video-frame video { width: 100%; display: block; aspect-ratio: 16 / 9; }
+  .video-frame.desktop video { width: 100%; display: block; aspect-ratio: 16 / 9; }
+  .video-frame.mobile {
+    max-width: 320px; margin: 0 auto;
+  }
+  .video-frame.mobile video { width: 100%; display: block; aspect-ratio: 390 / 844; background: #111; }
 
-  /* ---------- screenshots ---------- */
   .shots { display: grid; gap: 18px; margin-top: 40px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
   .shots figure { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); box-shadow: 0 10px 24px rgba(10,85,97,.10); background: #fff; }
   .shots figcaption { font-size: 13.5px; color: var(--muted); padding: 10px 14px; }
 
-  /* ---------- features ---------- */
   .feat { display: grid; gap: 16px; margin-top: 40px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
   .feat .f { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
   .feat .f h3 { font-size: 16px; margin-bottom: 6px; color: var(--teal-deep); }
   .feat .f p { font-size: 14px; color: var(--muted); }
 
-  /* ---------- fork banner ---------- */
+  .caveats {
+    margin-top: 36px; background: #fff; border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 28px 28px 16px;
+  }
+  .caveats details {
+    border-bottom: 1px solid var(--line); padding: 12px 0;
+  }
+  .caveats details:last-child { border-bottom: none; }
+  .caveats summary {
+    cursor: pointer; font-weight: 700; color: var(--teal-deep); list-style: none;
+  }
+  .caveats summary::-webkit-details-marker { display: none; }
+  .caveats summary::before { content: "+ "; color: var(--orange); }
+  .caveats details[open] summary::before { content: "− "; }
+  .caveats ul { margin: 10px 0 6px 1.1rem; color: var(--muted); font-size: 14px; }
+  .caveats li { margin: 4px 0; }
+
   .fork-banner {
     background: linear-gradient(150deg, var(--teal-night), var(--teal-deep));
     color: #eaf6f7; border-radius: 24px; padding: 48px 32px; text-align: center;
@@ -154,33 +182,25 @@
     <a class="link" href="#demo">Demo</a>
     <a class="link" href="#download">Download</a>
     <a class="link" href="#features">Features</a>
+    <a class="link" href="#security">Security</a>
     <a class="link" href="https://github.com/taksha17/kite/tree/main/docs">Docs</a>
-    <a class="gh-btn" href="https://github.com/taksha17/kite/fork" rel="noopener">
-      <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor"><path d="M5 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm0 2.122a2.25 2.25 0 1 0-1.5 0v.878A2.25 2.25 0 0 0 5.75 8.5h1.5v2.128a2.251 2.251 0 1 0 1.5 0V8.5h1.5a2.25 2.25 0 0 0 2.25-2.25v-.878a2.25 2.25 0 1 0-1.5 0v.878a.75.75 0 0 1-.75.75h-4.5A.75.75 0 0 1 5 6.25v-.878zM8.75 12.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zM12 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0z"/></svg>
-      Fork
-    </a>
+    <a class="gh-btn" href="https://github.com/taksha17/kite/fork" rel="noopener">Fork</a>
   </div>
 </header>
 
 <section class="hero" id="top">
   <div class="wrap">
     <img class="logo" src="assets/kite.svg" alt="Kite" />
-    <span class="pill" id="version-pill">v0.1.0 · MIT open source</span>
+    <span class="pill" id="version-pill">v2.0 · MIT open source</span>
     <h1>Books that stay light.</h1>
     <p class="sub">
       Free, open-source accounting for Indian small businesses — GST invoices,
-      e-way bills, inventory and reports. Offline-first: your data stays on
-      your machine, in files you own.
+      e-way bills, inventory and reports. <b>Solo</b> on one desk, or
+      <b>Enterprise</b> for an office on your LAN. Your data stays in files you own.
     </p>
     <div class="cta-row">
-      <a class="btn btn-primary" href="#download">
-        <svg viewBox="0 0 16 16" width="17" height="17" fill="currentColor"><path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"/><path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z"/></svg>
-        Download
-      </a>
-      <a class="btn btn-ghost" href="https://github.com/taksha17/kite/fork" rel="noopener">
-        <svg viewBox="0 0 16 16" width="17" height="17" fill="currentColor"><path d="M5 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm0 2.122a2.25 2.25 0 1 0-1.5 0v.878A2.25 2.25 0 0 0 5.75 8.5h1.5v2.128a2.251 2.251 0 1 0 1.5 0V8.5h1.5a2.25 2.25 0 0 0 2.25-2.25v-.878a2.25 2.25 0 1 0-1.5 0v.878a.75.75 0 0 1-.75.75h-4.5A.75.75 0 0 1 5 6.25v-.878zM8.75 12.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zM12 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0z"/></svg>
-        Fork on GitHub
-      </a>
+      <a class="btn btn-primary" href="#download">Download</a>
+      <a class="btn btn-ghost" href="#demo">Watch demos</a>
     </div>
     <div class="shields">
       <a href="https://github.com/taksha17/kite"><img src="https://img.shields.io/github/stars/taksha17/kite?style=social" alt="GitHub stars" /></a>
@@ -193,16 +213,36 @@
 <section id="demo">
   <div class="wrap">
     <h2>See it in action</h2>
-    <p class="lead">A two-minute tour: create a company, post a sale, print the GST invoice, export GSTR-1.</p>
-    <div class="video-frame">
-      <video
-        controls
-        preload="none"
-        poster="assets/demo-poster.png"
-        src="https://github.com/taksha17/kite/releases/latest/download/kite-walkthrough.webm">
-        Sorry, your browser can't play this video —
-        <a href="https://github.com/taksha17/kite/releases/latest/download/kite-walkthrough.webm">download the walkthrough</a>.
-      </video>
+    <p class="lead">Two separate walkthroughs — desktop PC and mobile screen. Same books flow: company → sale → GST invoice → reports.</p>
+    <div class="video-grid">
+      <div class="video-card">
+        <h3>Desktop (PC)</h3>
+        <p>Full tour including inventory, GSTR-1 Excel export, and role-based users.</p>
+        <div class="video-frame desktop">
+          <video
+            id="video-desktop"
+            controls
+            preload="none"
+            poster="assets/desktop-demo-poster.png"
+            src="https://github.com/taksha17/kite/releases/latest/download/kite-desktop-walkthrough.webm">
+            <a href="https://github.com/taksha17/kite/releases/latest/download/kite-desktop-walkthrough.webm">Download desktop walkthrough</a>
+          </video>
+        </div>
+      </div>
+      <div class="video-card">
+        <h3>Mobile screen</h3>
+        <p>Phone-sized viewport — how the UI feels on a handset (Enterprise PWA or phone-only).</p>
+        <div class="video-frame mobile">
+          <video
+            id="video-mobile"
+            controls
+            preload="none"
+            poster="assets/mobile-demo-poster.png"
+            src="https://github.com/taksha17/kite/releases/latest/download/kite-mobile-walkthrough.webm">
+            <a href="https://github.com/taksha17/kite/releases/latest/download/kite-mobile-walkthrough.webm">Download mobile walkthrough</a>
+          </video>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -210,9 +250,10 @@
 <section id="download" style="padding-top:0">
   <div class="wrap">
     <h2>Download Kite</h2>
-    <p class="lead">Pick your platform — every build is free, with no accounts and no lock-in.</p>
-    <p class="version-line">Latest release: <b id="latest-version">v0.1.0</b> · <a href="https://github.com/taksha17/kite/releases/latest" id="release-notes-link">release notes</a></p>
+    <p class="lead">Solo for one desk. Enterprise for a shared office parent PC. Every build is free.</p>
+    <p class="version-line">Latest release: <b id="latest-version">v2.0.1</b> · <a href="https://github.com/taksha17/kite/releases/latest" id="release-notes-link">release notes</a></p>
 
+    <p class="section-label">Solo — desktop</p>
     <div class="grid">
       <div class="card" data-platform="windows">
         <div class="os">
@@ -233,7 +274,6 @@
         <div class="meta">M1 / M2 / M3 / M4</div>
         <div class="meta" data-meta="kite-macos-arm64.dmg"></div>
         <a class="dl" href="https://github.com/taksha17/kite/releases/latest/download/kite-macos-arm64.dmg">Download .dmg</a>
-        <div class="alt"></div>
       </div>
 
       <div class="card" data-platform="mac-intel">
@@ -244,37 +284,50 @@
         <div class="meta">Older Intel Macs</div>
         <div class="meta" data-meta="kite-macos-x64.dmg"></div>
         <a class="dl" href="https://github.com/taksha17/kite/releases/latest/download/kite-macos-x64.dmg">Download .dmg</a>
-        <div class="alt"></div>
       </div>
 
       <div class="card" data-platform="linux">
         <div class="os">
-          <svg viewBox="0 0 24 24"><path d="M12 2c-.8 0-1.5.7-1.9 1.6-.4.8-.6 1.7-.9 2.5-.4.9-.9 1.7-1.4 2.5-.5.7-1.1 1.4-1.6 2.2-.5.8-.9 1.6-1.1 2.5-.2.8-.3 1.7-.1 2.5.2.8.6 1.5 1.2 2 .6.5 1.4.8 2.2.9.8.1 1.6 0 2.4 0h2.4c.8-.1 1.6-.4 2.2-.9.6-.5 1-1.2 1.2-2 .2-.8.1-1.7-.1-2.5-.2-.9-.6-1.7-1.1-2.5-.5-.8-1.1-1.5-1.6-2.2-.5-.8-1-1.6-1.4-2.5-.3-.8-.5-1.7-.9-2.5C13.5 2.7 12.8 2 12 2zM7 21c-1 0-2-.3-2.7-.9-.8.5-1.6 1-2 1.7-.2.4 0 .8.4.9 1 .3 2.1.3 3.1.2 1-.1 2-.4 2.9-.7H7zm10 0h-1.6c.9.3 1.9.6 2.9.7 1 .1 2.1.1 3.1-.2.4-.1.6-.5.4-.9-.4-.7-1.2-1.2-2-1.7-.7.6-1.7.9-2.8.9z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 2c-.8 0-1.5.7-1.9 1.6-.4.8-.6 1.7-.9 2.5-.4.9-.9 1.7-1.4 2.5-.5.7-1.1 1.4-1.6 2.2-.5.8-.9 1.6-1.1 2.5-.2.8-.3 1.7-.1 2.5.2.8.6 1.5 1.2 2 .6.5 1.4.8 2.2.9.8.1 1.6 0 2.4 0h2.4c.8-.1 1.6-.4 2.2-.9.6-.5 1-1.2 1.2-2 .2-.8.1-1.7-.1-2.5-.2-.9-.6-1.7-1.1-2.5-.5-.8-1.1-1.5-1.6-2.2-.5-.8-1-1.6-1.4-2.5-.3-.8-.5-1.7-.9-2.5C13.5 2.7 12.8 2 12 2z"/></svg>
           Linux
         </div>
         <div class="meta">Ubuntu / Debian · 64-bit</div>
         <div class="meta" data-meta="kite-linux-x64.deb"></div>
         <a class="dl" href="https://github.com/taksha17/kite/releases/latest/download/kite-linux-x64.deb">Download .deb</a>
-        <div class="alt"><a href="https://github.com/taksha17/kite#quick-start">Other distros: build from source</a></div>
+        <div class="alt"><a href="https://github.com/taksha17/kite#quick-start-developers">Other distros: build from source</a></div>
       </div>
+    </div>
 
+    <p class="section-label">Enterprise — parent PC (Server Edition)</p>
+    <div class="grid">
+      <div class="card enterprise" data-platform="ent-windows">
+        <div class="os">Windows parent</div>
+        <div class="meta">Office PC runs the server; staff use any browser</div>
+        <div class="meta" data-meta="kite-enterprise-windows-x64.zip"></div>
+        <a class="dl" href="https://github.com/taksha17/kite/releases/latest/download/kite-enterprise-windows-x64.zip">Download .zip</a>
+        <div class="alt">Includes start.bat + web UI</div>
+      </div>
+      <div class="card enterprise" data-platform="ent-linux">
+        <div class="os">Linux parent</div>
+        <div class="meta">x64 tarball + systemd unit</div>
+        <div class="meta" data-meta="kite-enterprise-linux-x64.tar.gz"></div>
+        <a class="dl" href="https://github.com/taksha17/kite/releases/latest/download/kite-enterprise-linux-x64.tar.gz">Download .tar.gz</a>
+        <div class="alt"><a href="https://github.com/taksha17/kite/blob/main/docs/deployment.md">Deployment guide</a></div>
+      </div>
       <div class="card pwa" data-platform="android">
-        <div class="os">
-          <svg viewBox="0 0 24 24"><path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84 1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48A5.84 5.84 0 0 0 12 1c-.96 0-1.86.23-2.66.63L7.85.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31A5.983 5.983 0 0 0 6 7h12c0-1.99-.97-3.75-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/></svg>
-          Android &amp; iOS
-        </div>
-        <div class="meta">Progressive Web App via Kite Team</div>
-        <div class="meta"></div>
+        <div class="os">Phones &amp; tablets</div>
+        <div class="meta">PWA via your Enterprise URL</div>
         <a class="dl" href="https://github.com/taksha17/kite/blob/main/docs/deployment.md">Set up mobile access</a>
-        <div class="alt">Runs from your team's server — install to home screen</div>
+        <div class="alt">Add to Home Screen from Chrome / Safari</div>
       </div>
     </div>
 
     <div class="fineprint">
-      <b>First-run notes:</b> builds are unsigned (code-signing certificates cost money — maybe later).
+      <b>First-run notes:</b> builds are unsigned.
       On <b>Windows</b>, click <i>More info → Run anyway</i> if SmartScreen asks.
       On <b>macOS</b>, right-click the app → <i>Open</i> the first time.
-      Kite never phones home; AI quick entry is optional and off by default.
+      Kite never phones home; AI is optional and draft-only. Full list:
+      <a href="#security">caveats &amp; security</a>.
     </div>
   </div>
 </section>
@@ -301,17 +354,73 @@
 <section id="features" style="padding-top:0">
   <div class="wrap">
     <h2>Everything a small business needs</h2>
-    <p class="lead">No subscriptions, no cloud requirement, no feature gates.</p>
+    <p class="lead">No subscriptions, no forced cloud, no feature gates.</p>
     <div class="feat">
       <div class="f"><h3>GST, done right</h3><p>CGST/SGST/IGST split, HSN/SAC, GSTR-1 &amp; GSTR-3B style summaries with one-click Excel export.</p></div>
-      <div class="f"><h3>e-Way bills</h3><p>Generate NIC e-way bills straight from the invoice — sandbox and production endpoints.</p></div>
+      <div class="f"><h3>e-Way &amp; e-Invoice</h3><p>NIC e-way bills and IRN + signed QR — sandbox and production, free direct API.</p></div>
       <div class="f"><h3>Inventory</h3><p>Units, godowns, stock items, sales/purchase stock lines and stock summaries.</p></div>
-      <div class="f"><h3>Multi-user teams</h3><p>Optional Kite Team server: roles, audit log, per-company data, access from any browser or phone.</p></div>
-      <div class="f"><h3>AI quick entry</h3><p>Describe a voucher in one sentence — AI drafts it for review. Bring your own key; drafts never auto-post.</p></div>
-      <div class="f"><h3>Offline &amp; private</h3><p>One SQLite file per company on your disk. Copy it anywhere to back up. You own your books.</p></div>
-      <div class="f"><h3>PDF invoices</h3><p>Tax-invoice preview, download and email via your own SMTP.</p></div>
-      <div class="f"><h3>Double-entry core</h3><p>Balanced books enforced before every save; day book, trial balance, P&amp;L, balance sheet.</p></div>
+      <div class="f"><h3>Kite Enterprise</h3><p>One parent PC holds the books; staff on any OS open a browser. Roles + audit log.</p></div>
+      <div class="f"><h3>AI quick entry</h3><p>Describe a voucher or snap a bill — AI drafts for review. Bring your own key; never auto-posts.</p></div>
+      <div class="f"><h3>Offline &amp; private</h3><p>One SQLite file per company. Copy it to back up. You own your books.</p></div>
     </div>
+  </div>
+</section>
+
+<section id="security" style="padding-top:0">
+  <div class="wrap">
+    <h2>Caveats, guardrails &amp; security</h2>
+    <p class="lead">Clear limits so you know what Kite does — and does not — protect.</p>
+    <div class="caveats">
+      <details open>
+        <summary>Installers &amp; trust</summary>
+        <ul>
+          <li>Binaries are <b>unsigned</b> — expect SmartScreen / Gatekeeper warnings.</li>
+          <li>Download only from <a href="https://github.com/taksha17/kite/releases">official GitHub Releases</a>.</li>
+          <li>No auto-update channel — you choose when to upgrade.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Data &amp; backups</summary>
+        <ul>
+          <li>You own the SQLite files. Losing the only copy loses the books — back up deliberately.</li>
+          <li><b>Do not</b> put live company DBs on a multi-writer network share for Solo (corruption risk).</li>
+          <li>For shared books, use <b>Enterprise</b> (HTTP to the parent), not file sharing.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Enterprise / LAN</summary>
+        <ul>
+          <li>Plain HTTP on a trusted LAN is convenient but session tokens are not encrypted — use HTTPS beyond the office LAN.</li>
+          <li>Open firewall port 8080 only as needed; keep <code>jwt_secret.hex</code> with your backups.</li>
+          <li>Passwords are PBKDF2-hashed. Roles limit UI actions; they are not a wall against someone who has the DB files.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>AI (optional)</summary>
+        <ul>
+          <li>Off until you add a provider key. Draft-only — nothing auto-posts.</li>
+          <li>When enabled, prompts and book context go to <b>your</b> chosen provider (leaves the machine).</li>
+          <li>Always verify GST, parties, and HSN before accepting a draft.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Integrations</summary>
+        <ul>
+          <li>e-Way / e-Invoice credentials live in the company DB — use sandbox first.</li>
+          <li>SMTP and Google Drive credentials you enter are stored with company settings.</li>
+          <li>Phone-only Drive sync is last-writer-wins — not simultaneous multi-user.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>App guardrails</summary>
+        <ul>
+          <li>Vouchers must balance before save; IRN/e-way can lock edits.</li>
+          <li>Follow-up messages are drafts — you send them.</li>
+          <li>No core telemetry. Network use is what you enable (AI, NIC, SMTP, Drive, Enterprise).</li>
+        </ul>
+      </details>
+    </div>
+    <p class="lead" style="margin-top:20px">Full write-up in the <a href="https://github.com/taksha17/kite#caveats-guardrails--security">README</a>.</p>
   </div>
 </section>
 
@@ -323,10 +432,7 @@
         Kite is MIT-licensed and built to be forked. Take the codebase, rename it,
         bend it to your workflow — or help us make the original better.
       </p>
-      <a class="btn btn-primary" href="https://github.com/taksha17/kite/fork" rel="noopener">
-        <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M5 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm0 2.122a2.25 2.25 0 1 0-1.5 0v.878A2.25 2.25 0 0 0 5.75 8.5h1.5v2.128a2.251 2.251 0 1 0 1.5 0V8.5h1.5a2.25 2.25 0 0 0 2.25-2.25v-.878a2.25 2.25 0 1 0-1.5 0v.878a.75.75 0 0 1-.75.75h-4.5A.75.75 0 0 1 5 6.25v-.878zM8.75 12.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zM12 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0z"/></svg>
-        Fork the repo
-      </a>
+      <a class="btn btn-primary" href="https://github.com/taksha17/kite/fork" rel="noopener">Fork the repo</a>
       <br />
       <a class="star-link" href="https://github.com/taksha17/kite">…or just star it on GitHub — that helps too</a>
     </div>
@@ -339,8 +445,8 @@
       <a href="https://github.com/taksha17/kite">GitHub</a>
       <a href="https://github.com/taksha17/kite/releases/latest">All releases</a>
       <a href="https://github.com/taksha17/kite/blob/main/docs/getting-started.md">Getting started</a>
+      <a href="https://github.com/taksha17/kite/blob/main/docs/deployment.md">Enterprise deploy</a>
       <a href="https://github.com/taksha17/kite/blob/main/LICENSE">MIT License</a>
-      <a href="https://github.com/taksha17/kite/blob/main/CONTRIBUTING.md">Contribute</a>
     </div>
     <p>Kite is an original open-source project — not affiliated with Tally or any proprietary accounting suite.</p>
   </div>
@@ -349,8 +455,6 @@
 <script>
 (function () {
   var repo = "taksha17/kite";
-
-  // Highlight the card matching the visitor's platform.
   var ua = navigator.userAgent;
   var key = /Windows/i.test(ua) ? "windows"
     : /Android|iPhone|iPad/i.test(ua) ? "android"
@@ -370,7 +474,6 @@
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   }
 
-  // Fill in live version + file sizes from the latest GitHub release.
   fetch("https://api.github.com/repos/" + repo + "/releases/latest")
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (rel) {
@@ -384,7 +487,7 @@
         if (slot) slot.textContent = fmtSize(a.size) + " · " + a.download_count + " downloads";
       });
     })
-    .catch(function () { /* offline or rate-limited: permalinks still work */ });
+    .catch(function () {});
 })();
 </script>
 

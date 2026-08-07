@@ -18,7 +18,7 @@ you own (Solo desktop or self-hosted Enterprise).
 - **Forkable** — clone from Git, invent your own product on top
 
 **Landing page (AI-first story + downloads + demos):**
-[kite-v2-ten.vercel.app](https://kite-v2-ten.vercel.app/)
+[kite-v2-ten.vercel.app](https://kite-4jy6.vercel.app/)
 
 **Try AI in ~2 minutes:** [docs/ai-first.md](./docs/ai-first.md) (free OpenRouter key, no card)
 

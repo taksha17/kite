@@ -92,6 +92,7 @@ Builds are **unsigned** for now (see caveats below).
 - **Quick entry:** describe a sale in English or Hinglish — or snap a purchase bill — AI drafts the voucher; **you** Accept ([docs/ai-first.md](./docs/ai-first.md))
 - **Cmd/Ctrl-K:** draft or jump from anywhere
 - **Ask my books:** natural-language → read-only SQL on your company DB
+- **String agent:** BYOK chat + Dictate; tools for ask / draft voucher / setup / reminders — review before write — [docs/string-agent.md](./docs/string-agent.md)
 - **Home insights, open AR (FIFO), follow-up drafts, period close, anomaly watch**
 - **BYOK:** OpenRouter free models (no card), plus OpenAI / Anthropic / Gemini — draft-only, never auto-post
 
@@ -243,6 +244,7 @@ site/                  Marketing landing (Vercel) — AI-first story
 9. **Done** — Data import for masters / openings (Excel/CSV, Tally-friendly)
 10. **Done** — Live Tally HTTP migrate (ledgers + stock while Tally is open)
 11. **Done** — Trust docs: what’s free / backup & restore (+ in-app data folder)
+12. **Done** — String agent (BYOK voice + tools, review-before-write)
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 

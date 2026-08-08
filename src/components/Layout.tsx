@@ -13,6 +13,7 @@ const links = [
   { to: "/data-import", label: "Data import" },
   { to: "/tally-migrate", label: "Tally migrate" },
   { to: "/ask", label: "Ask" },
+  { to: "/string", label: "String" },
   { to: "/follow-up", label: "Follow-up" },
   { to: "/period-close", label: "Period close" },
   { to: "/anomalies", label: "Anomalies" },

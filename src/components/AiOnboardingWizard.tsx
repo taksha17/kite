@@ -30,11 +30,17 @@ type Step = "describe" | "review" | "done";
  * ledgers/items/GST, the owner reviews and applies. Additive only — never
  * touches existing records.
  */
-export function AiOnboardingWizard({ onClose }: { onClose: () => void }) {
+export function AiOnboardingWizard({
+  onClose,
+  initialDescription,
+}: {
+  onClose: () => void;
+  initialDescription?: string;
+}) {
   const { company, saveGstSettings } = useApp();
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>("describe");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(initialDescription?.trim() || "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aiReady, setAiReady] = useState<boolean | null>(null);
@@ -53,6 +59,10 @@ export function AiOnboardingWizard({ onClose }: { onClose: () => void }) {
       .then((s) => setAiReady(aiConfigured(s)))
       .catch(() => setAiReady(false));
   }, []);
+
+  useEffect(() => {
+    if (initialDescription?.trim()) setDescription(initialDescription.trim());
+  }, [initialDescription]);
 
   if (!company) return null;
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { formatInr } from "../lib/accounting/engine";
 import {
   buildHomeInsightCards,
@@ -29,12 +29,30 @@ import { useApp } from "../state/AppContext";
 
 export function HomePage() {
   const { company, ready } = useApp();
+  const [params, setParams] = useSearchParams();
   const [voucherCount, setVoucherCount] = useState(0);
   const [netProfit, setNetProfit] = useState(0);
   const [cashBank, setCashBank] = useState(0);
   const [insights, setInsights] = useState<HomeInsightCard[]>([]);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardDismissed, setWizardDismissed] = useState(false);
+  const [setupDesc, setSetupDesc] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (params.get("setup") !== "1") return;
+    const desc = params.get("desc") || undefined;
+    setSetupDesc(desc || undefined);
+    setWizardOpen(true);
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("setup");
+        next.delete("desc");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [params, setParams]);
 
   useEffect(() => {
     if (!company) return;
@@ -224,7 +242,13 @@ export function HomePage() {
       )}
 
       {wizardOpen && (
-        <AiOnboardingWizard onClose={() => setWizardOpen(false)} />
+        <AiOnboardingWizard
+          initialDescription={setupDesc}
+          onClose={() => {
+            setWizardOpen(false);
+            setSetupDesc(undefined);
+          }}
+        />
       )}
 
       <section className="panel">

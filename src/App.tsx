@@ -3,6 +3,7 @@ import { Layout } from "./components/Layout";
 import { BankImportPage } from "./pages/BankImportPage";
 import { DataImportPage } from "./pages/DataImportPage";
 import { TallyMigratePage } from "./pages/TallyMigratePage";
+import { StringPage } from "./pages/StringPage";
 import { AskPage } from "./pages/AskPage";
 import { FollowUpPage } from "./pages/FollowUpPage";
 import { PeriodClosePage } from "./pages/PeriodClosePage";
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="data-import" element={<DataImportPage />} />
             <Route path="tally-migrate" element={<TallyMigratePage />} />
             <Route path="ask" element={<AskPage />} />
+            <Route path="string" element={<StringPage />} />
             <Route path="follow-up" element={<FollowUpPage />} />
             <Route path="period-close" element={<PeriodClosePage />} />
             <Route path="anomalies" element={<AnomaliesPage />} />

@@ -11,6 +11,7 @@ can only **draft**. You always review and press Accept. Nothing auto-posts.
 | **Bill capture** | Photo / image of a purchase bill → draft purchase (vision models) |
 | **Cmd/Ctrl-K** | Draft a voucher or jump anywhere from the palette |
 | **Ask my books** | Question → read-only SQL on your company DB → answer + table |
+| **String agent** | Named BYOK agent + Dictate; ask / draft / setup / reminders — you Accept — [string-agent.md](./string-agent.md) |
 | **Insights / follow-up** | Home cards, open AR, reminder drafts, period close, anomalies |
 
 ## 1. Get a free OpenRouter key (no card)

@@ -41,10 +41,10 @@ Do **not** put Solo’s company `.db` files on a Windows/NAS shared drive and op
 
 | Tour | Watch / download |
 | --- | --- |
-| **Desktop (PC)** — company → sale → GST invoice → reports → roles | [kite-desktop-walkthrough.webm](https://github.com/taksha17/kite/releases/latest/download/kite-desktop-walkthrough.webm) |
-| **Mobile screen** — same flow on a phone-sized viewport | [kite-mobile-walkthrough.webm](https://github.com/taksha17/kite/releases/latest/download/kite-mobile-walkthrough.webm) |
+| **Desktop (PC)** — company → sale → GST invoice → reports → roles | [kite-desktop-walkthrough.webm](https://github.com/taksha17/kite/releases/download/v2.0.4/kite-desktop-walkthrough.webm) |
+| **Mobile screen** — same flow on a phone-sized viewport | [kite-mobile-walkthrough.webm](https://github.com/taksha17/kite/releases/download/v2.0.4/kite-mobile-walkthrough.webm) |
 
-Also embedded on the [landing page](https://kite-v2-ten.vercel.app/#demo). Regenerate locally:
+Also embedded on the [landing page](https://kite-4jy6.vercel.app/#demo). Regenerate locally:
 
 ```bash
 npm run build

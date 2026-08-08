@@ -8,6 +8,7 @@ import {
   isTauriRuntime,
   remoteDownloadBackup,
 } from "../lib/server/remote";
+import { DataBackupHelp } from "../components/DataBackupHelp";
 import { DriveBackupPanel } from "../components/DriveBackupPanel";
 import type { CompanyRecord } from "../lib/db/client";
 import {
@@ -204,8 +205,8 @@ export function CompaniesPage() {
         <div>
           <h1>Companies</h1>
           <p className="lede">
-            Each company is a local SQLite file you own — easy to back up and
-            move.
+            Each company is a file you own. Solo is free for one desk — back up
+            regularly (see Data &amp; backup below).
           </p>
         </div>
       </header>
@@ -328,6 +329,7 @@ export function CompaniesPage() {
         </section>
       </div>
 
+      <DataBackupHelp />
       <DriveBackupPanel />
 
       {company && allowed("manage_company") && (

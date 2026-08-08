@@ -29,9 +29,11 @@ proprietary accounting suite.
 
 | Product | Who it's for | How you use it |
 | --- | --- | --- |
-| **Kite Solo** | One person / one desk | Desktop installers (Windows / macOS / Linux). Books stay in local SQLite files. |
+| **Kite Solo** | One person / one desk | Desktop installers (Windows / macOS / Linux). Books stay in local SQLite files. **Free to use** — [docs/whats-free.md](./docs/whats-free.md). |
 | **Kite Enterprise** (Server Edition) | Office with shared books (1 parent PC + staff) | Parent runs `kite-server`; everyone else opens a **browser** to that PC on the LAN. Parent and child OS can differ. |
 | **Phone-only** | Owner whose phone is the billing device | Browser PWA + optional Google Drive snapshots — [docs/google-drive.md](./docs/google-drive.md) |
+
+**Solo limits (honest):** one desk, you back up your files, no Kite phone support desk, AI/e-invoice need your own keys when enabled. Details: [docs/whats-free.md](./docs/whats-free.md). Backup: [docs/backup-restore.md](./docs/backup-restore.md).
 
 Do **not** put Solo’s company `.db` files on a Windows/NAS shared drive and open them from multiple PCs. That can corrupt SQLite. For shared books, use **Enterprise** (HTTP to the parent), not a file share.
 
@@ -126,7 +128,7 @@ Read this before putting real company data on a shared network.
 ### Data ownership & backups
 
 - **You own the files.** Solo: company DBs under the OS app-data folder. Enterprise: everything under the parent’s `--data-dir` (`kite-registry.db`, `jwt_secret.hex`, `kite-company-*.db`).
-- **Back up deliberately.** Copy the data directory or use Companies → Backup (owner). Losing the only copy loses the books.
+- **Back up deliberately.** Companies → **Backup**, or copy the data folder. In Solo, **Companies → Data & backup** shows the path. Guide: [docs/backup-restore.md](./docs/backup-restore.md).
 - **Never put the live data directory on a multi-writer network share** for Solo. Concurrent SQLite over SMB/NFS is unsafe. Use Enterprise for shared access.
 
 ### Kite Enterprise (LAN / server)
@@ -240,6 +242,7 @@ site/                  Marketing landing (Vercel) — AI-first story
 8. **Done** — AI-first public positioning (landing, docs/ai-first.md)
 9. **Done** — Data import for masters / openings (Excel/CSV, Tally-friendly)
 10. **Done** — Live Tally HTTP migrate (ledgers + stock while Tally is open)
+11. **Done** — Trust docs: what’s free / backup & restore (+ in-app data folder)
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 

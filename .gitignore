@@ -51,6 +51,9 @@ kite-data/
 # Demo recording artifacts (regenerate with npm run kite:demo)
 demo/
 
+# Local probe / recording scripts
+scripts/_probe-ai-demo.mjs
+
 # Installers (attach to GitHub Releases instead of committing)
 installers/
 

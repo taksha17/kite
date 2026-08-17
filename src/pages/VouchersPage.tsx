@@ -84,7 +84,7 @@ export function VouchersPage() {
                         </Link>
                       )}
                       <Link
-                        className="ghost btn"
+                        className="secondary btn"
                         to={`/vouchers/${v.id}/edit`}
                         title={
                           (v.irn && v.irn_status !== "CNL") || v.ewb_no

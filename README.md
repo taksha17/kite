@@ -115,7 +115,10 @@ Builds are **unsigned** for now (see caveats below).
 - **Tally live migrate:** keep TallyPrime open (HTTP :9000); Kite pulls ledgers/stock for review — [docs/tally-migrate.md](./docs/tally-migrate.md)
 - **Open AR (FIFO):** receipts clear oldest unpaid sales first
 - Reports: Day Book, Ledger, Trial Balance, Profit & Loss, Balance Sheet
-- Balanced double-entry before save; posted vouchers editable until IRN/e-way locks them
+- **Balanced double-entry before save; posted vouchers editable until IRN/e-way locks them**
+- **Serial search:** find any invoice/voucher by product serial number, batch number, or item name — useful for replacements and warranty lookups
+- **Edit invoice:** direct Edit action from the invoice page and from serial-search results; Edit button is now more visible on the Vouchers list
+- **Reorganized sidebar:** grouped navigation (Work, Records, Tools, Insights, Admin) for a cleaner, minimal look
 
 ## Caveats, guardrails & security
 
@@ -242,11 +245,13 @@ site/                  Marketing landing (Vercel) — AI-first story
 7. **Done** — Enterprise Server Edition packages (Linux + Windows)
 8. **Done** — AI-first public positioning (landing, docs/ai-first.md)
 9. **Done** — Data import for masters / openings (Excel/CSV, Tally-friendly)
-10. **Done** — Live Tally HTTP migrate (ledgers + stock while Tally is open)
-11. **Done** — Trust docs: what’s free / backup & restore (+ in-app data folder)
-12. **Done** — String agent (BYOK voice + tools, review-before-write)
+ 10. **Done** — Live Tally HTTP migrate (ledgers + stock while Tally is open)
+ 11. **Done** — Trust docs: what’s free / backup & restore (+ in-app data folder)
+ 12. **Done** — String agent (BYOK voice + tools, review-before-write)
+ 13. **Done** — Serial-number search and improved edit-invoice access across views
+ 14. **Done** — Cleaner grouped sidebar navigation
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md).
+ See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 Like Kite? **Star the repo.** Building your own thing on top?
 [**Fork it**](https://github.com/taksha17/kite/fork) — that's what the MIT license is for.

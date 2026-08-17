@@ -40,6 +40,7 @@ export type {
   VoucherRow,
   VoucherLineRow,
   GstInvoiceRow,
+  SerialSearchRow,
 } from "./types";
 import type {
   CompanyRecord,
@@ -48,6 +49,7 @@ import type {
   VoucherRow,
   VoucherLineRow,
   GstInvoiceRow,
+  SerialSearchRow,
 } from "./types";
 export { getActiveCompanyDb, getActiveCompanyId } from "./active";
 
@@ -993,6 +995,37 @@ export async function fetchGstInvoices(
        AND v.taxable_value IS NOT NULL
      ORDER BY v.date, v.id`,
     params,
+  );
+}
+
+export async function searchVouchersBySerialNo(
+  serialNo: string,
+): Promise<SerialSearchRow[]> {
+  const db = getActiveCompanyDb();
+  const term = `%${serialNo.trim()}%`;
+  return db.select<SerialSearchRow[]>(
+    `SELECT
+       v.id as voucher_id,
+       v.voucher_type,
+       v.date,
+       v.number,
+       v.total_amount,
+       p.name as party_name,
+       i.name as item_name,
+       m.serial_no,
+       m.batch_no,
+       CASE v.voucher_type
+         WHEN 'purchase' THEN m.qty_in
+         ELSE m.qty_out
+       END as qty,
+       m.rate
+     FROM stock_movement m
+     JOIN voucher v ON v.id = m.voucher_id
+     JOIN stock_item i ON i.id = m.item_id
+     LEFT JOIN ledger p ON p.id = v.party_ledger_id
+     WHERE m.serial_no LIKE $1
+     ORDER BY v.date DESC, v.id DESC`,
+    [term],
   );
 }
 

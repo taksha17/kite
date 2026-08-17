@@ -8,6 +8,7 @@ import { AskPage } from "./pages/AskPage";
 import { FollowUpPage } from "./pages/FollowUpPage";
 import { PeriodClosePage } from "./pages/PeriodClosePage";
 import { AnomaliesPage } from "./pages/AnomaliesPage";
+import { SerialSearchPage } from "./pages/SerialSearchPage";
 import { CompaniesPage } from "./pages/CompaniesPage";
 import { HomePage } from "./pages/HomePage";
 import { InvoicePage } from "./pages/InvoicePage";
@@ -41,9 +42,10 @@ export default function App() {
             <Route path="follow-up" element={<FollowUpPage />} />
             <Route path="period-close" element={<PeriodClosePage />} />
             <Route path="anomalies" element={<AnomaliesPage />} />
-          <Route path="vouchers/new" element={<VoucherEditorPage />} />
-          <Route path="vouchers/:id/edit" element={<VoucherEditorPage />} />
-          <Route path="vouchers/:id/invoice" element={<InvoicePage />} />
+            <Route path="serial-search" element={<SerialSearchPage />} />
+            <Route path="vouchers/new" element={<VoucherEditorPage />} />
+            <Route path="vouchers/:id/edit" element={<VoucherEditorPage />} />
+            <Route path="vouchers/:id/invoice" element={<InvoicePage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />

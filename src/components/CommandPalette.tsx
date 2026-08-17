@@ -62,6 +62,7 @@ export function CommandPalette() {
       { id: "bank", label: "Bank import", hint: "statement to vouchers", keywords: "bank statement import csv excel reconcile", perm: "create_voucher", run: () => navigate("/bank-import") },
       { id: "dataimport", label: "Data import", hint: "Excel/CSV masters", keywords: "import migrate excel csv ledger party stock opening", perm: "manage_ledgers", run: () => navigate("/data-import") },
       { id: "tallymigrate", label: "Migrate from Tally", hint: "live HTTP pull", keywords: "tally migrate live http xml port 9000 ledger stock", perm: "manage_ledgers", run: () => navigate("/tally-migrate") },
+      { id: "serial", label: "Search by serial no.", hint: "find invoice by serial/batch/item", keywords: "serial search invoice find replacement batch item", perm: "create_voucher", run: () => navigate("/serial-search") },
       { id: "ask", label: "Ask my books", hint: "natural-language Q&A", keywords: "ask question balance owe gst stock query", run: () => navigate("/ask") },
       { id: "string", label: "String agent", hint: "voice + tools", keywords: "string agent voice dictate ai assistant setup", run: () => navigate("/string") },
       { id: "follow", label: "Receivables follow-up", hint: "payment reminders", keywords: "follow up reminder overdue receivable whatsapp email", run: () => navigate("/follow-up") },

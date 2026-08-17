@@ -112,3 +112,17 @@ export interface GstInvoiceRow {
   igst_amount: number;
   total_amount: number;
 }
+
+export interface SerialSearchRow {
+  voucher_id: number;
+  voucher_type: string;
+  date: string;
+  number: string | null;
+  total_amount: number;
+  party_name: string | null;
+  item_name: string;
+  serial_no: string | null;
+  batch_no: string | null;
+  qty: number;
+  rate: number;
+}
